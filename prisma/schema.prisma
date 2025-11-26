@@ -12,3 +12,119 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// --- Users / Roles ---
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  firstName   String?
+  lastName    String?
+  phone       String?
+
+  avatarUrl                String?
+  avatarStorageKey         String?
+
+  isActive    Boolean  @default(false)
+  isAgreedToTerms Boolean  @default(false)
+  isAgreedToPrivacyPolicy Boolean  @default(false)
+
+  roles              UserRole[]
+  driverProfile      DriverProfile?
+
+  accounts Account[]
+  sessions Session[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  providerId            String
+  accountId             String
+  // OAuth tokens (optional)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  scope                 String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  // Local auth (email/password) if enabled
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  impersonatedBy String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// --- Roles ---
+
+model Role {
+  id    String  @id @default(uuid())
+  key  String  @unique // 'DRIVER', 'DISPATCHER', 'ACCOUNTANT', 'SPEDITOR'
+
+  users UserRole[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model UserRole {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  assignedAt DateTime @default(now())
+
+  @@id([userId, roleId])
+  @@index([roleId])
+}
+
+// --- Driver profile
+
+model DriverProfile {
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id])
+
+  companyInternalId       String? 
+  driverCode              String   @unique 
+
+  visaExpiresAt                 DateTime?
+  drivingLicenseExpiresAt       DateTime?
+  workPermitExpiresAt           DateTime?
+  medicalCheckExpiresAt         DateTime?
+  psychCheckExpiresAt           DateTime?
+  driverCardExpiresAt           DateTime?
+  residenceCardExpiresAt        DateTime?
+  driverCertificateExpiresAt    DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([driverCode])
+}
