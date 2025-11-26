@@ -3,6 +3,7 @@ import { APP_FILTER } from '@nestjs/core';
 
 import { ConfigModule } from './config/config.module';
 import { LoggingModule } from './infrastructure/logging/logging.module';
+import { PrismaModule } from './infrastructure/prisma/prisma.module';
 
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 
@@ -12,8 +13,8 @@ import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
     ConfigModule,
 
     //insfrastructure modules
-    //TODO:PrismaModule,
     LoggingModule,
+    PrismaModule,
 
     //domeain / features modules
     //TODO: AuthModule, UsersModule, RolesModule, TransportOrdersModule, NotificationsModule, DriverModule, DispatcherModule
