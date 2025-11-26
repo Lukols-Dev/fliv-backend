@@ -1,10 +1,29 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { APP_FILTER } from '@nestjs/core';
+
+import { ConfigModule } from './config/config.module';
+import { LoggingModule } from './infrastructure/logging/logging.module';
+
+import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    //global config module
+    ConfigModule,
+
+    //insfrastructure modules
+    //TODO:PrismaModule,
+    LoggingModule,
+
+    //domeain / features modules
+    //TODO: AuthModule, UsersModule, RolesModule, TransportOrdersModule, NotificationsModule, DriverModule, DispatcherModule
+  ],
+  controllers: [],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}
