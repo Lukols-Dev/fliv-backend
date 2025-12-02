@@ -1,8 +1,12 @@
 {
   "name": "backend",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Backend for Fliv Transport Management System",
+  "author": {
+    "name": "Łukasz Olszewski",
+    "email": "lukols.dev@gmail.com",
+    "url": "https://lukols.com"
+  },
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

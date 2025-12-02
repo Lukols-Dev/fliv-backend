@@ -6,12 +6,11 @@ import { ConfigService } from '@nestjs/config';
 import { Logger } from 'pino-nestjs';
 
 async function bootstrap() {
-  // 1. Tworzymy aplikację z bufferLogs, żeby logi sprzed startu też poszły przez Pino
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
+    bodyParser: false, //BetterAuth need this to work
   });
 
-  // 2. Bierzemy ConfigService i wyciągamy sekcję "app"
   const configService = app.get(ConfigService);
   const appConfig = configService.get<{
     port: number;
