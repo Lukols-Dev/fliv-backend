@@ -16,6 +16,7 @@ import { UpdateDriverUseCase } from './application/use-cases/update-driver-docum
 
 import { DriverRegistrationController } from './interface/rest/driver-registration.controller';
 import { UsersController } from './interface/rest/users.controller';
+import { AssignRoleToUserUseCase } from './application/use-cases/assign-role-to-user.usecase';
 
 @Module({
   imports: [PrismaModule],
@@ -36,6 +37,7 @@ import { UsersController } from './interface/rest/users.controller';
     RegisterDispatcherUseCase,
     ActivateUserUseCase,
     UpdateDriverUseCase,
+    AssignRoleToUserUseCase,
   ],
   controllers: [DriverRegistrationController, UsersController],
   exports: [USER_REPOSITORY],

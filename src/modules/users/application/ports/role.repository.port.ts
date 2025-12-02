@@ -1,4 +1,4 @@
-import { RoleKey } from 'src/shared/constants/roles.constants';
+import type { RoleKey } from 'src/shared/constants/roles.constants';
 
 export const ROLE_REPOSITORY = Symbol('ROLE_REPOSITORY');
 

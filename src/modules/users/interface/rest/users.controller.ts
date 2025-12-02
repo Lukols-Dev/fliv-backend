@@ -11,7 +11,9 @@ import {
   type UserRepositoryPort,
 } from '../../application/ports/user.repository.port';
 import { Inject } from '@nestjs/common';
-
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+@ApiTags('Users')
+@ApiBearerAuth()
 @Controller('users')
 @UseGuards(AuthGuard)
 export class UsersController {

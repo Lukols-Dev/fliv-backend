@@ -1,4 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   USER_REPOSITORY,
   type UserRepositoryPort,
@@ -27,7 +32,11 @@ export class RegisterDispatcherUseCase {
   async execute(input: RegisterDispatcherInput): Promise<void> {
     const user = await this.userRepository.findById(input.currentUserId);
     if (!user) {
-      throw new Error('User does not exist');
+      throw new NotFoundException('User does not exist');
+    }
+
+    if (!user.isActive) {
+      throw new BadRequestException('Account is not active');
     }
 
     await this.roleRepository.ensureRoleExists(ROLE_DISPATCHER);

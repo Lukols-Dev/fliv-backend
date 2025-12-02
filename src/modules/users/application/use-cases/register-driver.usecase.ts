@@ -1,4 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   USER_REPOSITORY,
   type UserRepositoryPort,
@@ -36,12 +41,11 @@ export class RegisterDriverUseCase {
 
     const user = await this.userRepository.findById(userId.value);
     if (!user) {
-      throw new Error('User does not exist');
+      throw new NotFoundException('User does not exist');
     }
 
-    // Driver must be active to use the application
     if (!user.isActive) {
-      throw new Error('Account is not active');
+      throw new BadRequestException('Account is not active');
     }
 
     // 1. Ensure that the DRIVER role exists

@@ -4,7 +4,9 @@ import type { UserSession } from '@thallesp/nestjs-better-auth';
 
 import { RegisterDriverDto } from '../../application/dto/register-driver.dto';
 import { RegisterDriverUseCase } from '../../application/use-cases/register-driver.usecase';
-
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+@ApiTags('Driver')
+@ApiBearerAuth()
 @Controller('driver')
 @UseGuards(AuthGuard)
 export class DriverRegistrationController {
