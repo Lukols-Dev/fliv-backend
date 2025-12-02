@@ -24,5 +24,8 @@ export const betterAuthClient = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  advanced: {
+    disableOriginCheck: true, // TODO: remove this on production, ONLY FOR DEV!
+  },
   trustedOrigins: [process.env.FRONTEND_URL ?? 'http://localhost:3000'],
 });
