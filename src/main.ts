@@ -26,7 +26,8 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
 
   // global prefix: /api/v1
-  app.setGlobalPrefix(`${appConfig.apiPrefix}/${appConfig.apiVersion}`);
+  const globalPrefix = `${appConfig.apiPrefix}/${appConfig.apiVersion}`;
+  app.setGlobalPrefix(globalPrefix);
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('FLIV API')
@@ -36,7 +37,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
 
-  // useGlobalPrefix: true => Swagger UI /api/v1/docs
+  // useGlobalPrefix: true => Swagger UI /api/v1/docs or /docs-json
   SwaggerModule.setup('docs', app, document, {
     useGlobalPrefix: true,
   });
