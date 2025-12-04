@@ -2,9 +2,7 @@ import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard, Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 
-import { RegisterDispatcherDto } from '../../application/dto/register-dispatcher.dto';
 import { ActivateUserDto } from '../../application/dto/activate-user.dto';
-import { RegisterDispatcherUseCase } from '../../application/use-cases/register-dispatcher.usecase';
 import { ActivateUserUseCase } from '../../application/use-cases/activate-user.usecase';
 import {
   USER_REPOSITORY,
@@ -12,24 +10,26 @@ import {
 } from '../../application/ports/user.repository.port';
 import { Inject } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { RegisterUserProfileDto } from '../../application/dto/register-user-profile.dto';
+import { RegisterUserProfileUseCase } from '../../application/use-cases/register-user-profile.usecase';
 @ApiTags('Users')
 @ApiBearerAuth()
 @Controller('users')
 @UseGuards(AuthGuard)
 export class UsersController {
   constructor(
-    private readonly registerDispatcherUseCase: RegisterDispatcherUseCase,
+    private readonly registerUserProfileUseCase: RegisterUserProfileUseCase,
     private readonly activateUserUseCase: ActivateUserUseCase,
     @Inject(USER_REPOSITORY)
     private readonly userRepository: UserRepositoryPort,
   ) {}
 
-  @Post('register-dispatcher')
-  async registerDispatcher(
+  @Post('profile')
+  async completeProfile(
     @Session() session: UserSession,
-    @Body() dto: RegisterDispatcherDto,
+    @Body() dto: RegisterUserProfileDto,
   ): Promise<{ success: boolean }> {
-    await this.registerDispatcherUseCase.execute({
+    await this.registerUserProfileUseCase.execute({
       currentUserId: session.user.id,
       payload: dto,
     });
