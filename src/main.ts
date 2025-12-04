@@ -6,12 +6,11 @@ import { ConfigService } from '@nestjs/config';
 import { Logger } from 'pino-nestjs';
 
 async function bootstrap() {
-  // 1. Tworzymy aplikację z bufferLogs, żeby logi sprzed startu też poszły przez Pino
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
+    bodyParser: false, //BetterAuth need this to work
   });
 
-  // 2. Bierzemy ConfigService i wyciągamy sekcję "app"
   const configService = app.get(ConfigService);
   const appConfig = configService.get<{
     port: number;
@@ -27,7 +26,8 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
 
   // global prefix: /api/v1
-  app.setGlobalPrefix(`${appConfig.apiPrefix}/${appConfig.apiVersion}`);
+  const globalPrefix = `${appConfig.apiPrefix}/${appConfig.apiVersion}`;
+  app.setGlobalPrefix(globalPrefix);
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('FLIV API')
@@ -37,7 +37,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
 
-  // useGlobalPrefix: true => Swagger UI /api/v1/docs
+  // useGlobalPrefix: true => Swagger UI /api/v1/docs or /docs-json
   SwaggerModule.setup('docs', app, document, {
     useGlobalPrefix: true,
   });
