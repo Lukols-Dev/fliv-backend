@@ -40,6 +40,7 @@ export class RegisterDriverUseCase {
     const userId = new UserId(input.currentUserId);
 
     const user = await this.userRepository.findById(userId.value);
+
     if (!user) {
       throw new NotFoundException('User does not exist');
     }
@@ -48,15 +49,23 @@ export class RegisterDriverUseCase {
       throw new BadRequestException('Account is not active');
     }
 
-    // 1. Ensure that the DRIVER role exists
-    await this.roleRepository.ensureRoleExists(ROLE_DRIVER);
+    // 1. Update basic user data (names, phone, consents)
+    await this.userRepository.update(userId.value, {
+      firstName: input.payload.firstName,
+      lastName: input.payload.lastName,
+      phone: input.payload.phone,
+      isAgreedToTerms: input.payload.isAgreedToTerms,
+      isAgreedToPrivacyPolicy: input.payload.isAgreedToPrivacyPolicy,
+    });
 
-    // 2. Assign the DRIVER role
+    // 2. Ensure DRIVER role exists and assign it
+    await this.roleRepository.ensureRoleExists(ROLE_DRIVER);
     await this.roleRepository.assignRoleToUser(userId.value, ROLE_DRIVER);
 
     // 3. Create DriverProfile (if it does not exist)
     const existingProfile =
       await this.driverProfileRepository.findByUserId(userId);
+
     if (!existingProfile) {
       await this.driverProfileRepository.create({
         userId: userId.value,
@@ -66,13 +75,6 @@ export class RegisterDriverUseCase {
       await this.driverProfileRepository.update(userId, {
         companyInternalId:
           input.payload.companyInternalId ?? existingProfile.companyInternalId,
-      });
-    }
-
-    // You can also save the phone in the User through another use-case / updateUser
-    if (input.payload.phone) {
-      await this.userRepository.update(userId.value, {
-        phone: input.payload.phone,
       });
     }
   }
