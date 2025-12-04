@@ -3,27 +3,23 @@ import {
   USER_REPOSITORY,
   type UserRepositoryPort,
 } from '../ports/user.repository.port';
-import { ActivateUserDto } from '../dto/activate-user.dto';
 import { UserId } from '../../domain/value-objects/user-id.vo';
 
 @Injectable()
-export class ActivateUserUseCase {
+export class DeleteUserUseCase {
   constructor(
     @Inject(USER_REPOSITORY)
     private readonly userRepository: UserRepositoryPort,
   ) {}
 
-  async execute(dto: ActivateUserDto): Promise<void> {
-    const userId = new UserId(dto.userId);
+  async execute(rawUserId: string): Promise<void> {
+    const userId = new UserId(rawUserId);
 
     const user = await this.userRepository.findById(userId);
-
     if (!user) {
       throw new NotFoundException('User does not exist');
     }
 
-    await this.userRepository.update(userId, {
-      isActive: dto.isActive,
-    });
+    await this.userRepository.delete(userId);
   }
 }

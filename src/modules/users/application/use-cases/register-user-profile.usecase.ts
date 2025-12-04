@@ -3,11 +3,12 @@ import {
   USER_REPOSITORY,
   type UserRepositoryPort,
 } from '../ports/user.repository.port';
-import { RegisterDispatcherDto } from '../dto/register-user-profile.dto';
+import { RegisterUserProfileDto } from '../dto/register-user-profile.dto';
+import { UserId } from '../../domain/value-objects/user-id.vo';
 
 export interface RegisterDispatcherInput {
   currentUserId: string;
-  payload: RegisterDispatcherDto;
+  payload: RegisterUserProfileDto;
 }
 
 @Injectable()
@@ -18,13 +19,14 @@ export class RegisterUserProfileUseCase {
   ) {}
 
   async execute(input: RegisterDispatcherInput): Promise<void> {
-    const user = await this.userRepository.findById(input.currentUserId);
+    const userId = new UserId(input.currentUserId);
+    const user = await this.userRepository.findById(userId);
 
     if (!user) {
       throw new NotFoundException('User does not exist');
     }
 
-    await this.userRepository.update(input.currentUserId, {
+    await this.userRepository.update(userId, {
       firstName: input.payload.firstName,
       lastName: input.payload.lastName,
       phone: input.payload.phone,

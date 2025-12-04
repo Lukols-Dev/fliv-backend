@@ -1,4 +1,3 @@
-// src/modules/users/application/ports/driver-profile.repository.port.ts
 import { DriverProfile } from '../../domain/entities/driver-profile.entity';
 import { UserId } from '../../domain/value-objects/user-id.vo';
 
@@ -22,10 +21,11 @@ export interface UpdateDriverProfileInput {
 }
 
 export interface DriverProfileRepositoryPort {
+  findByUserId(userId: UserId): Promise<DriverProfile | null>;
   create(input: CreateDriverProfileInput): Promise<DriverProfile>;
   update(
     userId: UserId,
     input: UpdateDriverProfileInput,
   ): Promise<DriverProfile>;
-  findByUserId(userId: UserId): Promise<DriverProfile | null>;
+  deleteByUserId(userId: UserId): Promise<void>;
 }

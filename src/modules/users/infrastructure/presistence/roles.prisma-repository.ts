@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { RoleRepositoryPort } from '../../application/ports/role.repository.port';
 import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 import { RoleKey } from 'src/shared/constants/roles.constants';
+import { UserId } from '../../domain/value-objects/user-id.vo';
 
 @Injectable()
 export class RolesPrismaRepository implements RoleRepositoryPort {
@@ -17,7 +18,7 @@ export class RolesPrismaRepository implements RoleRepositoryPort {
     });
   }
 
-  async assignRoleToUser(userId: string, key: RoleKey): Promise<void> {
+  async assignRoleToUser(userId: UserId, key: RoleKey): Promise<void> {
     const role = await this.prisma.role.findUnique({
       where: { key },
     });
@@ -29,22 +30,33 @@ export class RolesPrismaRepository implements RoleRepositoryPort {
     await this.prisma.userRole.upsert({
       where: {
         userId_roleId: {
-          userId,
+          userId: userId.value,
           roleId: role.id,
         },
       },
       update: {},
       create: {
-        userId,
+        userId: userId.value,
         roleId: role.id,
       },
     });
   }
 
-  async userHasRole(userId: string, key: RoleKey): Promise<boolean> {
+  async removeRoleFromUser(userId: UserId, key: RoleKey): Promise<void> {
+    await this.prisma.userRole.deleteMany({
+      where: {
+        userId: userId.value,
+        role: {
+          key,
+        },
+      },
+    });
+  }
+
+  async userHasRole(userId: UserId, key: RoleKey): Promise<boolean> {
     const result = await this.prisma.userRole.findFirst({
       where: {
-        userId,
+        userId: userId.value,
         role: {
           key,
         },

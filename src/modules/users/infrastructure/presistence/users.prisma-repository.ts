@@ -7,14 +7,15 @@ import {
 } from '../../application/ports/user.repository.port';
 import { User } from '../../domain/entities/user.entity';
 import { UserMapper } from '../mappers/user.mapper';
+import { UserId } from '../../domain/value-objects/user-id.vo';
 
 @Injectable()
 export class UsersPrismaRepository implements UserRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string): Promise<User | null> {
+  async findById(id: UserId): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
-      where: { id },
+      where: { id: id.value },
     });
 
     if (!user) return null;
@@ -46,9 +47,9 @@ export class UsersPrismaRepository implements UserRepositoryPort {
     return UserMapper.toDomain(created);
   }
 
-  async update(id: string, data: UpdateUserInput): Promise<User> {
+  async update(id: UserId, data: UpdateUserInput): Promise<User> {
     const updated = await this.prisma.user.update({
-      where: { id },
+      where: { id: id.value },
       data: {
         firstName: data.firstName,
         lastName: data.lastName,
@@ -64,9 +65,9 @@ export class UsersPrismaRepository implements UserRepositoryPort {
     return UserMapper.toDomain(updated);
   }
 
-  async findWithRolesById(id: string): Promise<User | null> {
+  async findWithRolesById(id: UserId): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
-      where: { id },
+      where: { id: id.value },
       include: {
         roles: {
           include: {
@@ -79,5 +80,11 @@ export class UsersPrismaRepository implements UserRepositoryPort {
     if (!user) return null;
 
     return UserMapper.toDomain(user);
+  }
+
+  async delete(id: UserId): Promise<void> {
+    await this.prisma.user.delete({
+      where: { id: id.value },
+    });
   }
 }

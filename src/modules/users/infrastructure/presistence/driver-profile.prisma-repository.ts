@@ -90,4 +90,10 @@ export class DriverProfilePrismaRepository
 
     return this.toDomain(record);
   }
+
+  async deleteByUserId(userId: UserId): Promise<void> {
+    await this.prisma.driverProfile.deleteMany({
+      where: { userId: userId.value },
+    });
+  }
 }

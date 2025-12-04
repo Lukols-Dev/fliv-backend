@@ -39,7 +39,7 @@ export class RegisterDriverUseCase {
   async execute(input: RegisterDriverInput): Promise<void> {
     const userId = new UserId(input.currentUserId);
 
-    const user = await this.userRepository.findById(userId.value);
+    const user = await this.userRepository.findById(userId);
 
     if (!user) {
       throw new NotFoundException('User does not exist');
@@ -50,7 +50,7 @@ export class RegisterDriverUseCase {
     }
 
     // 1. Update basic user data (names, phone, consents)
-    await this.userRepository.update(userId.value, {
+    await this.userRepository.update(userId, {
       firstName: input.payload.firstName,
       lastName: input.payload.lastName,
       phone: input.payload.phone,
@@ -60,7 +60,7 @@ export class RegisterDriverUseCase {
 
     // 2. Ensure DRIVER role exists and assign it
     await this.roleRepository.ensureRoleExists(ROLE_DRIVER);
-    await this.roleRepository.assignRoleToUser(userId.value, ROLE_DRIVER);
+    await this.roleRepository.assignRoleToUser(userId, ROLE_DRIVER);
 
     // 3. Create DriverProfile (if it does not exist)
     const existingProfile =

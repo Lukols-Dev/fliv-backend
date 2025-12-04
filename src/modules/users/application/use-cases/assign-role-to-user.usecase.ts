@@ -8,6 +8,7 @@ import {
   type RoleRepositoryPort,
 } from '../ports/role.repository.port';
 import type { RoleKey } from 'src/shared/constants/roles.constants';
+import { UserId } from '../../domain/value-objects/user-id.vo';
 
 export interface AssignRoleToUserInput {
   targetUserId: string;
@@ -24,15 +25,15 @@ export class AssignRoleToUserUseCase {
   ) {}
 
   async execute(input: AssignRoleToUserInput): Promise<void> {
-    const user = await this.userRepository.findById(input.targetUserId);
+    const targetUserId = new UserId(input.targetUserId);
+
+    const user = await this.userRepository.findById(targetUserId);
+
     if (!user) {
       throw new NotFoundException('User does not exist');
     }
 
     await this.roleRepository.ensureRoleExists(input.roleKey);
-    await this.roleRepository.assignRoleToUser(
-      input.targetUserId,
-      input.roleKey,
-    );
+    await this.roleRepository.assignRoleToUser(targetUserId, input.roleKey);
   }
 }

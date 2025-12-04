@@ -1,8 +1,8 @@
 import { User } from '../../domain/entities/user.entity';
+import { UserId } from '../../domain/value-objects/user-id.vo';
 
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 
-export type UserId = string;
 export type Email = string;
 
 export interface CreateUserInput {
@@ -38,4 +38,6 @@ export interface UserRepositoryPort {
    * in order to calculate permissions.
    */
   findWithRolesById(id: UserId): Promise<User | null>;
+
+  delete(id: UserId): Promise<void>;
 }
