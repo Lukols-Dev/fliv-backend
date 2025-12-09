@@ -174,9 +174,9 @@ enum NotificationType {
 
 model TransportOrder {
   id          String   @id @default(cuid())
-  ztNumber    String   @unique  
-  pwNumber    String?          
-  status    TransportOrderStatus @default(PENDING)         
+  ztNumber    String   @unique
+  pwNumber    String?
+  status    TransportOrderStatus @default(PENDING)
 
   vehiclePlate      String
   trailerPlate      String?
@@ -184,8 +184,8 @@ model TransportOrder {
   driverLastName    String
   driverPhone       String
 
-  clientName        String     
-  contractNumber    String?     
+  clientName        String
+  contractNumber    String?
   payerName         String?
   payerVatId        String?
   payerEmail        String?
@@ -245,9 +245,9 @@ model Notification {
 model Document {
   id          String   @id @default(cuid())
 
-  url         String           
-  storageKey  String   @unique 
-  mimeType    String           
+  url         String
+  storageKey  String   @unique
+  mimeType    String
 
   sizeBytes       Int?
   originalFilename String?
