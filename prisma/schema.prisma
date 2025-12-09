@@ -30,8 +30,11 @@ model User {
   isAgreedToTerms Boolean  @default(false)
   isAgreedToPrivacyPolicy Boolean  @default(false)
 
-  roles              UserRole[]
-  driverProfile      DriverProfile?
+  roles                   UserRole[]
+  driverProfile           DriverProfile?
+  documents               Document[]
+  transportOrders         TransportOrder[] @relation("CreatedByUser")
+  assignedTransportOrders TransportOrder[] @relation("AssignedDriver")
 
   accounts Account[]
   sessions Session[]
@@ -129,4 +132,106 @@ model DriverProfile {
   updatedAt   DateTime @updatedAt
 
   @@index([driverCode])
+}
+
+// --- Transport Order ---
+
+enum TransportOrderStatus {
+  PENDING      
+  ACCEPTED     
+  IN_PROGRESS  
+  LOADING      
+  UNLOADING    
+  COMPLETED    
+  PROBLEM      
+}
+
+enum DocumentSource {
+  DRIVER      
+  DISPATCHER  
+  SYSTEM      
+}
+
+model TransportOrder {
+  id          String   @id @default(cuid())
+  ztNumber    String   @unique  
+  pwNumber    String?          
+  status    TransportOrderStatus @default(PENDING)         
+
+  vehiclePlate      String
+  trailerPlate      String?
+  driverFirstName   String
+  driverLastName    String
+  driverPhone       String
+
+  clientName        String     
+  contractNumber    String?     
+  payerName         String?
+  payerVatId        String?
+  payerEmail        String?
+
+  fromCountry       String
+  toCountry         String
+  cargoWeightKg     Float?
+  loadingDate       DateTime?
+  cargoDescription  String?
+  temperatureSensitive Boolean @default(false)
+  notes             String?
+
+  createdByUserId   String
+  createdByUser     User   @relation("CreatedByUser", fields: [createdByUserId], references: [id])
+
+  assignedDriverUserId String?
+  assignedDriver       User?  @relation("AssignedDriver", fields: [assignedDriverUserId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderDocuments OrderDocument[]
+    // later: history, statuses, assignments, etc.
+
+  @@index([ztNumber])
+  @@index([createdByUserId])
+  @@index([assignedDriverUserId])
+}
+
+model Document {
+  id          String   @id @default(cuid())
+
+  url         String           // pełny URL z Cloudinary / S3
+  storageKey  String   @unique // Cloudinary public_id albo S3 key
+  mimeType    String           // "image/jpeg", "application/pdf", ...
+
+  sizeBytes       Int?
+  originalFilename String?
+  description      String?
+
+  uploadedByUserId String?
+  uploadedByUser   User? @relation(fields: [uploadedByUserId], references: [id])
+
+  createdAt   DateTime @default(now())
+
+  // relacje „w dół” – jeden model dla wszystkich typów zleceń
+  orderLinks  OrderDocument[]
+
+  @@index([uploadedByUserId])
+}
+
+model OrderDocument {
+  id          String   @id @default(cuid())
+
+  transportOrderId String?
+  transportOrder   TransportOrder? @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  source     DocumentSource @default(DISPATCHER)
+
+  title      String?
+
+  createdAt  DateTime @default(now())
+
+  @@index([transportOrderId])
+  @@index([documentId])
 }
