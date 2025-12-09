@@ -10,6 +10,17 @@ import {
 } from '../ports/transport-order.repository.port';
 import { UserId } from '../../../users/domain/value-objects/user-id.vo';
 import { TransportOrder } from '../../domain/entities/transport-order.entity';
+import {
+  TRANSPORT_ORDER_EVENT_REPOSITORY,
+  type TransportOrderEventRepositoryPort,
+} from '../ports/transport-order-event.repository.port';
+import { TransportOrderStatus } from '../../domain/value-objects/transport-order-status.vo';
+import {
+  NOTIFICATION_REPOSITORY,
+  type NotificationRepositoryPort,
+} from 'src/modules/notifications/application/ports/notification.repository.port';
+import { TransportOrderEventType } from '../../domain/value-objects/transport-order-event-type.vo';
+import { NotificationType } from 'src/modules/notifications/domain/value-objects/notification-type.vo';
 
 export interface AssignTransportOrderToDriverInput {
   currentUserId: string;
@@ -21,6 +32,10 @@ export class AssignTransportOrderToDriverUseCase {
   constructor(
     @Inject(TRANSPORT_ORDER_REPOSITORY)
     private readonly orderRepository: TransportOrderRepositoryPort,
+    @Inject(TRANSPORT_ORDER_EVENT_REPOSITORY)
+    private readonly eventRepository: TransportOrderEventRepositoryPort,
+    @Inject(NOTIFICATION_REPOSITORY)
+    private readonly notificationRepository: NotificationRepositoryPort,
   ) {}
 
   async execute(
@@ -40,13 +55,42 @@ export class AssignTransportOrderToDriverUseCase {
       throw new ConflictException('Transport order is already assigned');
     }
 
-    if (existing.assignedDriverUserId === driverId.value) {
-      return existing;
+    const alreadyAssigned = existing.assignedDriverUserId === driverId.value;
+
+    const assignedOrder = alreadyAssigned
+      ? existing
+      : await this.orderRepository.assignToDriver({
+          orderId: existing.id,
+          driverUserId: driverId,
+        });
+
+    const previousStatus = assignedOrder.status;
+    let currentOrder = assignedOrder;
+
+    if (assignedOrder.status !== TransportOrderStatus.ACCEPTED) {
+      currentOrder = await this.orderRepository.update(assignedOrder.id, {
+        status: TransportOrderStatus.ACCEPTED,
+      });
+
+      await this.eventRepository.record({
+        orderId: assignedOrder.id,
+        previousStatus,
+        newStatus: TransportOrderStatus.ACCEPTED,
+        type: TransportOrderEventType.ORDER_ASSIGNED,
+        description: null,
+        userId: driverId,
+      });
+
+      await this.notificationRepository.create({
+        userId: new UserId(assignedOrder.createdByUserId),
+        type: NotificationType.ORDER_STATUS_CHANGED,
+        message: `Zlecenie ${assignedOrder.ztNumber} ma nowy status ${TransportOrderStatus.ACCEPTED} (${new Date().toISOString()})`,
+      });
+
+      const reloaded = await this.orderRepository.findById(assignedOrder.id);
+      return reloaded ?? currentOrder;
     }
 
-    return this.orderRepository.assignToDriver({
-      orderId: existing.id,
-      driverUserId: driverId,
-    });
+    return currentOrder;
   }
 }

@@ -4,6 +4,7 @@ export enum TransportOrderStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   LOADING = 'LOADING',
   UNLOADING = 'UNLOADING',
+  PAUSED = 'PAUSED',
   COMPLETED = 'COMPLETED',
   PROBLEM = 'PROBLEM',
 }

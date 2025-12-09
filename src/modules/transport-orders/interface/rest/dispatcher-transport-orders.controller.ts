@@ -175,6 +175,14 @@ export class DispatcherTransportOrdersController {
         originalFilename: doc.originalFilename,
         description: doc.description ?? null,
       })),
+      events: order.events.map((event) => ({
+        id: event.id.value,
+        type: event.type,
+        previousStatus: event.previousStatus,
+        newStatus: event.newStatus,
+        description: event.description,
+        createdAt: event.createdAt,
+      })),
     };
   }
 }

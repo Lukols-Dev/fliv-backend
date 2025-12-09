@@ -17,7 +17,10 @@ import { TransportOrderMapper } from '../mappers/transport-order.mapper';
 import { UserId } from 'src/modules/users/domain/value-objects/user-id.vo';
 
 type TransportOrderWithDocuments = Prisma.TransportOrderGetPayload<{
-  include: { orderDocuments: { include: { document: true } } };
+  include: {
+    orderDocuments: { include: { document: true } };
+    events: { orderBy: { createdAt: 'asc' } };
+  };
 }>;
 
 @Injectable()
@@ -34,6 +37,9 @@ export class TransportOrdersPrismaRepository
           include: {
             document: true,
           },
+        },
+        events: {
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
@@ -53,6 +59,9 @@ export class TransportOrdersPrismaRepository
           include: {
             document: true,
           },
+        },
+        events: {
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
@@ -94,6 +103,9 @@ export class TransportOrdersPrismaRepository
             document: true,
           },
         },
+        events: {
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
 
@@ -133,6 +145,9 @@ export class TransportOrdersPrismaRepository
           include: {
             document: true,
           },
+        },
+        events: {
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
@@ -188,6 +203,9 @@ export class TransportOrdersPrismaRepository
               document: true,
             },
           },
+          events: {
+            orderBy: { createdAt: 'asc' },
+          },
         },
       });
 
@@ -236,6 +254,9 @@ export class TransportOrdersPrismaRepository
               document: true,
             },
           },
+          events: {
+            orderBy: { createdAt: 'asc' },
+          },
         },
       });
 
@@ -253,6 +274,9 @@ export class TransportOrdersPrismaRepository
           include: {
             document: true,
           },
+        },
+        events: {
+          orderBy: { createdAt: 'asc' },
         },
       },
     });

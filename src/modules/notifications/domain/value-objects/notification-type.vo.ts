@@ -1,0 +1,4 @@
+export enum NotificationType {
+  ORDER_STATUS_CHANGED = 'ORDER_STATUS_CHANGED',
+  ORDER_EVENT = 'ORDER_EVENT',
+}

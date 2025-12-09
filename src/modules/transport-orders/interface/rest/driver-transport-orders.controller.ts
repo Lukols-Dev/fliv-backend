@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -16,6 +17,12 @@ import { ListDriverTransportOrdersUseCase } from '../../application/use-cases/li
 import { GetDriverTransportOrderUseCase } from '../../application/use-cases/get-driver-transport-order.usecase';
 import { AssignTransportOrderToDriverUseCase } from '../../application/use-cases/assign-transport-order-to-driver.usecase';
 import { AssignTransportOrderDto } from '../../application/dto/assign-transport-order.dto';
+import { UpdateDriverTransportOrderStatusUseCase } from '../../application/use-cases/update-driver-transport-order-status.usecase';
+import { UpdateDriverTransportOrderStatusDto } from '../../application/dto/update-driver-transport-order-status.dto';
+import { ReportTransportOrderEventUseCase } from '../../application/use-cases/report-transport-order-event.usecase';
+import { ReportTransportOrderEventDto } from '../../application/dto/report-transport-order-event.dto';
+import { ReportTransportOrderProblemUseCase } from '../../application/use-cases/report-transport-order-problem.usecase';
+import { ReportTransportOrderProblemDto } from '../../application/dto/report-transport-order-problem.dto';
 
 @ApiTags('TransportOrders - Driver')
 @ApiBearerAuth()
@@ -26,6 +33,9 @@ export class DriverTransportOrdersController {
     private readonly listDriverOrdersUseCase: ListDriverTransportOrdersUseCase,
     private readonly getDriverOrderUseCase: GetDriverTransportOrderUseCase,
     private readonly assignTransportOrderUseCase: AssignTransportOrderToDriverUseCase,
+    private readonly updateStatusUseCase: UpdateDriverTransportOrderStatusUseCase,
+    private readonly reportEventUseCase: ReportTransportOrderEventUseCase,
+    private readonly reportProblemUseCase: ReportTransportOrderProblemUseCase,
   ) {}
 
   @Get()
@@ -82,6 +92,95 @@ export class DriverTransportOrdersController {
     };
   }
 
+  @Patch(':id/status')
+  @ApiOperation({
+    summary:
+      'Update status for assigned transport order (IN_PROGRESS, LOADING, UNLOADING, PAUSED, COMPLETED, PROBLEM)',
+  })
+  async updateStatus(
+    @Session() session: UserSession,
+    @Param('id') id: string,
+    @Body() dto: UpdateDriverTransportOrderStatusDto,
+  ) {
+    const order = await this.updateStatusUseCase.execute({
+      currentUserId: session.user.id,
+      orderId: id,
+      status: dto.status,
+      description: dto.description,
+    });
+
+    return {
+      id: order.id.value,
+      ztNumber: order.ztNumber,
+      status: order.status,
+      events: order.events.map((event) => ({
+        id: event.id.value,
+        type: event.type,
+        previousStatus: event.previousStatus,
+        newStatus: event.newStatus,
+        description: event.description,
+        createdAt: event.createdAt,
+      })),
+    };
+  }
+
+  @Post(':id/events')
+  @ApiOperation({ summary: 'Report route event (detour, accident, delay)' })
+  async reportEvent(
+    @Session() session: UserSession,
+    @Param('id') id: string,
+    @Body() dto: ReportTransportOrderEventDto,
+  ) {
+    const order = await this.reportEventUseCase.execute({
+      currentUserId: session.user.id,
+      orderId: id,
+      eventType: dto.eventType,
+      description: dto.description,
+    });
+
+    return {
+      id: order.id.value,
+      ztNumber: order.ztNumber,
+      status: order.status,
+      events: order.events.map((event) => ({
+        id: event.id.value,
+        type: event.type,
+        previousStatus: event.previousStatus,
+        newStatus: event.newStatus,
+        description: event.description,
+        createdAt: event.createdAt,
+      })),
+    };
+  }
+
+  @Post(':id/problem')
+  @ApiOperation({ summary: 'Report a problem and change status to PROBLEM' })
+  async reportProblem(
+    @Session() session: UserSession,
+    @Param('id') id: string,
+    @Body() dto: ReportTransportOrderProblemDto,
+  ) {
+    const order = await this.reportProblemUseCase.execute({
+      currentUserId: session.user.id,
+      orderId: id,
+      description: dto.description,
+    });
+
+    return {
+      id: order.id.value,
+      ztNumber: order.ztNumber,
+      status: order.status,
+      events: order.events.map((event) => ({
+        id: event.id.value,
+        type: event.type,
+        previousStatus: event.previousStatus,
+        newStatus: event.newStatus,
+        description: event.description,
+        createdAt: event.createdAt,
+      })),
+    };
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get transport order details for driver' })
   async getOne(@Session() session: UserSession, @Param('id') id: string) {
@@ -111,6 +210,14 @@ export class DriverTransportOrdersController {
         sizeBytes: doc.sizeBytes,
         originalFilename: doc.originalFilename,
         description: doc.description,
+      })),
+      events: order.events.map((event) => ({
+        id: event.id.value,
+        type: event.type,
+        previousStatus: event.previousStatus,
+        newStatus: event.newStatus,
+        description: event.description,
+        createdAt: event.createdAt,
       })),
     };
   }

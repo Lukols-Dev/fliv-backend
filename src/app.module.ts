@@ -12,6 +12,7 @@ import { UsersModule } from './modules/users/users.module';
 import { betterAuthClient } from './infrastructure/auth/better-auth.client';
 import { TransportOrdersModule } from './modules/transport-orders/transport-orders.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
     UsersModule,
     TransportOrdersModule,
     DocumentsModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [

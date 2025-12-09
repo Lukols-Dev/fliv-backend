@@ -1,6 +1,7 @@
 import { TransportOrderId } from '../value-objects/transport-order-id.vo';
 import { TransportOrderStatus } from '../value-objects/transport-order-status.vo';
 import { TransportOrderDocument } from './transport-order-document.entity';
+import { TransportOrderEvent } from './transport-order-event.entity';
 
 export class TransportOrder {
   constructor(
@@ -36,5 +37,6 @@ export class TransportOrder {
     public updatedAt: Date,
 
     public documents: TransportOrderDocument[] = [],
+    public events: TransportOrderEvent[] = [],
   ) {}
 }

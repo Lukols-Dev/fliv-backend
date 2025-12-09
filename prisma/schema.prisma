@@ -33,6 +33,7 @@ model User {
   roles                   UserRole[]
   driverProfile           DriverProfile?
   documents               Document[]
+  notifications           Notification[]
   transportOrders         TransportOrder[] @relation("CreatedByUser")
   assignedTransportOrders TransportOrder[] @relation("AssignedDriver")
 
@@ -142,6 +143,7 @@ enum TransportOrderStatus {
   IN_PROGRESS  
   LOADING      
   UNLOADING    
+  PAUSED       
   COMPLETED    
   PROBLEM      
 }
@@ -150,6 +152,24 @@ enum DocumentSource {
   DRIVER      
   DISPATCHER  
   SYSTEM      
+}
+
+enum TransportOrderEventType {
+  STATUS_CHANGED
+  INCIDENT_DETOUR
+  INCIDENT_ACCIDENT
+  INCIDENT_DELAY
+  ROUTE_PAUSED
+  ROUTE_RESUMED
+  ROUTE_FINISHED
+  PROBLEM_REPORTED
+  ORDER_ASSIGNED
+  ORDER_COMPLETED
+}
+
+enum NotificationType {
+  ORDER_STATUS_CHANGED
+  ORDER_EVENT
 }
 
 model TransportOrder {
@@ -188,11 +208,38 @@ model TransportOrder {
   updatedAt   DateTime @updatedAt
 
   orderDocuments OrderDocument[]
-    // later: history, statuses, assignments, etc.
+  events         TransportOrderEvent[]
 
   @@index([ztNumber])
   @@index([createdByUserId])
   @@index([assignedDriverUserId])
+}
+
+model TransportOrderEvent {
+  id               String                 @id @default(cuid())
+  transportOrderId String
+  transportOrder   TransportOrder         @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+  type             TransportOrderEventType
+  previousStatus   TransportOrderStatus?
+  newStatus        TransportOrderStatus?
+  description      String?
+  createdByUserId  String
+  createdAt        DateTime               @default(now())
+
+  @@index([transportOrderId])
+}
+
+model Notification {
+  id               String           @id @default(cuid())
+  userId           String
+  type             NotificationType
+  message          String
+  createdAt        DateTime         @default(now())
+  readAt           DateTime?
+
+  user             User             @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model Document {
