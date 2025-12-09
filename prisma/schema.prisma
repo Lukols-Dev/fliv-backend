@@ -245,9 +245,9 @@ model Notification {
 model Document {
   id          String   @id @default(cuid())
 
-  url         String           // pełny URL z Cloudinary / S3
-  storageKey  String   @unique // Cloudinary public_id albo S3 key
-  mimeType    String           // "image/jpeg", "application/pdf", ...
+  url         String           
+  storageKey  String   @unique 
+  mimeType    String           
 
   sizeBytes       Int?
   originalFilename String?
@@ -258,7 +258,6 @@ model Document {
 
   createdAt   DateTime @default(now())
 
-  // relacje „w dół” – jeden model dla wszystkich typów zleceń
   orderLinks  OrderDocument[]
 
   @@index([uploadedByUserId])
