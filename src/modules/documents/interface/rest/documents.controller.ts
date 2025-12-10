@@ -7,11 +7,10 @@ import {
   Param,
   Post,
   UploadedFile,
-  UseGuards,
   UseInterceptors,
   ParseFilePipeBuilder,
 } from '@nestjs/common';
-import { AuthGuard, Session } from '@thallesp/nestjs-better-auth';
+import { Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 import {
   ApiBearerAuth,
@@ -28,6 +27,11 @@ import { UploadDocumentDto } from '../../application/dto/upload-document.dto';
 import { UploadDocumentUseCase } from '../../application/use-cases/upload-document.usecase';
 import { DeleteDocumentUseCase } from '../../application/use-cases/delete-document.usecase';
 import type { LocalFile } from '../../application/ports/file-storage.port';
+import {
+  ROLE_ADMIN,
+  ROLE_DISPATCHER,
+} from 'src/shared/constants/roles.constants';
+import { Roles } from 'src/modules/auth/interface/http/roles.decorator';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -35,7 +39,7 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 @ApiTags('Documents')
 @ApiBearerAuth()
 @Controller(routesV1.documents.root)
-@UseGuards(AuthGuard)
+@Roles(ROLE_DISPATCHER, ROLE_ADMIN)
 export class DocumentsController {
   constructor(
     private readonly uploadDocumentUseCase: UploadDocumentUseCase,

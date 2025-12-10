@@ -6,9 +6,8 @@ import {
   Param,
   Patch,
   Post,
-  UseGuards,
 } from '@nestjs/common';
-import { AuthGuard, Session } from '@thallesp/nestjs-better-auth';
+import { Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 
 import { RegisterDriverDto } from '../../application/dto/register-driver.dto';
@@ -20,10 +19,11 @@ import { UpdateDriverDto } from '../../application/dto/update-driver-documents.d
 import { UpdateDriverUseCase } from '../../application/use-cases/update-driver-documents.usecase';
 import { DeleteDriverProfileUseCase } from '../../application/use-cases/delete-driver-profile.usecase';
 import { GetDriverProfileUseCase } from '../../application/use-cases/get-driver-profile.usecase';
+import { Roles } from 'src/modules/auth/interface/http/roles.decorator';
+import { ROLE_ADMIN, ROLE_DRIVER } from 'src/shared/constants/roles.constants';
 @ApiTags('Driver')
 @ApiBearerAuth()
 @Controller('driver')
-@UseGuards(AuthGuard)
 export class DriverRegistrationController {
   constructor(
     private readonly registerDriverUseCase: RegisterDriverUseCase,
@@ -47,6 +47,7 @@ export class DriverRegistrationController {
   }
 
   @Patch('profile')
+  @Roles(ROLE_DRIVER)
   async updateProfile(
     @Session() session: UserSession,
     @Body() dto: UpdateUserProfileDto,
@@ -60,6 +61,7 @@ export class DriverRegistrationController {
   }
 
   @Patch('documents')
+  @Roles(ROLE_DRIVER)
   async updateDocuments(
     @Session() session: UserSession,
     @Body() dto: UpdateDriverDto,
@@ -73,6 +75,7 @@ export class DriverRegistrationController {
   }
 
   @Get('profile')
+  @Roles(ROLE_DRIVER)
   @ApiOperation({
     summary: 'Get current driver full profile',
     description:
@@ -84,6 +87,7 @@ export class DriverRegistrationController {
   }
 
   @Delete()
+  @Roles(ROLE_DRIVER)
   @ApiOperation({
     summary: 'Delete current driver profile (self)',
     description: 'Removes driver profile and DRIVER role for current user.',
@@ -96,6 +100,7 @@ export class DriverRegistrationController {
   }
 
   @Delete(':userId')
+  @Roles(ROLE_ADMIN)
   @ApiOperation({
     summary: 'Delete driver profile by userId (admin)',
     description:

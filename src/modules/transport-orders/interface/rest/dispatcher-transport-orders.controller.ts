@@ -7,9 +7,8 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
-import { AuthGuard, Session } from '@thallesp/nestjs-better-auth';
+import { Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -24,11 +23,13 @@ import { DetachDocumentFromTransportOrderUseCase } from '../../application/use-c
 import { routesV1 } from 'src/config/app.routes';
 import { ListDispatcherTransportOrdersUseCase } from '../../application/use-cases/list-dispatcher-transport-orders.usecase';
 import { GetDispatcherTransportOrderUseCase } from '../../application/use-cases/get-dispatcher-transport-order.usecase';
+import { Roles } from 'src/modules/auth/interface/http/roles.decorator';
+import { ROLE_DISPATCHER } from 'src/shared/constants/roles.constants';
 
 @ApiTags('TransportOrders - Dispatcher')
 @ApiBearerAuth()
 @Controller(routesV1.transportOrders.dispatcher.root)
-@UseGuards(AuthGuard)
+@Roles(ROLE_DISPATCHER)
 export class DispatcherTransportOrdersController {
   constructor(
     private readonly createTransportOrderUseCase: CreateTransportOrderUseCase,

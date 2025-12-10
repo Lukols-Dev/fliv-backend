@@ -6,9 +6,8 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
-import { AuthGuard, Session } from '@thallesp/nestjs-better-auth';
+import { Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -23,11 +22,13 @@ import { ReportTransportOrderEventUseCase } from '../../application/use-cases/re
 import { ReportTransportOrderEventDto } from '../../application/dto/report-transport-order-event.dto';
 import { ReportTransportOrderProblemUseCase } from '../../application/use-cases/report-transport-order-problem.usecase';
 import { ReportTransportOrderProblemDto } from '../../application/dto/report-transport-order-problem.dto';
+import { Roles } from 'src/modules/auth/interface/http/roles.decorator';
+import { ROLE_DRIVER } from 'src/shared/constants/roles.constants';
 
 @ApiTags('TransportOrders - Driver')
 @ApiBearerAuth()
 @Controller(routesV1.transportOrders.driver.root)
-@UseGuards(AuthGuard)
+@Roles(ROLE_DRIVER)
 export class DriverTransportOrdersController {
   constructor(
     private readonly listDriverOrdersUseCase: ListDriverTransportOrdersUseCase,

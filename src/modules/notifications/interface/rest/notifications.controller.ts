@@ -1,23 +1,17 @@
-import {
-  Controller,
-  Get,
-  Patch,
-  Delete,
-  Param,
-  UseGuards,
-  Session,
-} from '@nestjs/common';
-import { AuthGuard, Session as BetterSession } from '@thallesp/nestjs-better-auth';
+import { Controller, Get, Patch, Delete, Param } from '@nestjs/common';
+import { Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { routesV1 } from 'src/config/app.routes';
 import { ListUserNotificationsUseCase } from '../../application/use-cases/list-user-notifications.usecase';
 import { MarkNotificationReadUseCase } from '../../application/use-cases/mark-notification-read.usecase';
 import { DeleteNotificationUseCase } from '../../application/use-cases/delete-notification.usecase';
+import { Roles } from 'src/modules/auth/interface/http/roles.decorator';
+import { ROLE_DISPATCHER } from 'src/shared/constants/roles.constants';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
-@UseGuards(AuthGuard)
+@Roles(ROLE_DISPATCHER)
 @Controller(routesV1.notifications.root)
 export class NotificationsController {
   constructor(
@@ -72,4 +66,3 @@ export class NotificationsController {
     return { success: true };
   }
 }
-
