@@ -13,6 +13,7 @@ import { betterAuthClient } from './infrastructure/auth/better-auth.client';
 import { TransportOrdersModule } from './modules/transport-orders/transport-orders.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     //domeain / features modules
     //TODO: RolesModule, NotificationsModule, DriverModule, DispatcherModule
     BetterAuthModule.forRoot({ auth: betterAuthClient }),
+    AuthModule,
     UsersModule,
     TransportOrdersModule,
     DocumentsModule,

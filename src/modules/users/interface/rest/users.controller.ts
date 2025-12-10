@@ -6,9 +6,8 @@ import {
   Param,
   Patch,
   Post,
-  UseGuards,
 } from '@nestjs/common';
-import { AuthGuard, Session } from '@thallesp/nestjs-better-auth';
+import { Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 
 import { ActivateUserDto } from '../../application/dto/activate-user.dto';
@@ -20,10 +19,12 @@ import { UpdateUserProfileDto } from '../../application/dto/update-user-profile.
 import { UpdateUserProfileUseCase } from '../../application/use-cases/update-user-profile.usecase';
 import { DeleteUserUseCase } from '../../application/use-cases/delete-user.usecase';
 import { GetCurrentUserUseCase } from '../../application/use-cases/get-current-user.usecase';
+import { Roles } from 'src/modules/auth/interface/http/roles.decorator';
+import { ROLE_ADMIN } from 'src/shared/constants/roles.constants';
+
 @ApiTags('Users')
 @ApiBearerAuth()
 @Controller('users')
-@UseGuards(AuthGuard)
 export class UsersController {
   constructor(
     private readonly registerUserProfileUseCase: RegisterUserProfileUseCase,
@@ -64,8 +65,8 @@ export class UsersController {
     return { success: true };
   }
 
-  // TODO: only ADMIN – for now, no roles guard
   @Post('activate')
+  @Roles(ROLE_ADMIN)
   async activateUser(
     @Body() dto: ActivateUserDto,
   ): Promise<{ success: boolean }> {
@@ -92,6 +93,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @Roles(ROLE_ADMIN)
   @ApiOperation({
     summary: 'Delete user by id (admin)',
     description:
