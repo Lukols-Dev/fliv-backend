@@ -3,28 +3,43 @@ import {
   Controller,
   Delete,
   Get,
+  HttpStatus,
   Param,
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
+  ParseFilePipeBuilder,
 } from '@nestjs/common';
 import { Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { CreateTransportOrderDto } from '../../application/dto/create-transport-order.dto';
 import { UpdateTransportOrderDto } from '../../application/dto/update-transport-order.dto';
-import { AttachDocumentDto } from '../../application/dto/attach-document.dto';
 import { CreateTransportOrderUseCase } from '../../application/use-cases/create-transport-order.usecase';
 import { UpdateTransportOrderUseCase } from '../../application/use-cases/update-transport-order.usecase';
 import { DeleteTransportOrderUseCase } from '../../application/use-cases/delete-transport-order.usecase';
-import { AttachDocumentToTransportOrderUseCase } from '../../application/use-cases/attach-document-to-transport-order.usecase';
 import { DetachDocumentFromTransportOrderUseCase } from '../../application/use-cases/detach-document-from-transport-order.usecase';
 import { routesV1 } from 'src/config/app.routes';
 import { ListDispatcherTransportOrdersUseCase } from '../../application/use-cases/list-dispatcher-transport-orders.usecase';
 import { GetDispatcherTransportOrderUseCase } from '../../application/use-cases/get-dispatcher-transport-order.usecase';
 import { Roles } from 'src/modules/auth/interface/http/roles.decorator';
 import { ROLE_DISPATCHER } from 'src/shared/constants/roles.constants';
+import { UploadDispatcherDocumentToTransportOrderUseCase } from '../../application/use-cases/upload-dispatcher-document-to-transport-order.usecase';
+import { UploadDriverOrderDocumentDto } from '../../application/dto/upload-driver-order-document.dto';
+
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 @ApiTags('TransportOrders - Dispatcher')
 @ApiBearerAuth()
@@ -35,10 +50,10 @@ export class DispatcherTransportOrdersController {
     private readonly createTransportOrderUseCase: CreateTransportOrderUseCase,
     private readonly updateTransportOrderUseCase: UpdateTransportOrderUseCase,
     private readonly deleteTransportOrderUseCase: DeleteTransportOrderUseCase,
-    private readonly attachDocumentUseCase: AttachDocumentToTransportOrderUseCase,
     private readonly detachDocumentUseCase: DetachDocumentFromTransportOrderUseCase,
     private readonly listDispatcherOrdersUseCase: ListDispatcherTransportOrdersUseCase,
     private readonly getDispatcherOrderUseCase: GetDispatcherTransportOrderUseCase,
+    private readonly uploadDispatcherDocumentUseCase: UploadDispatcherDocumentToTransportOrderUseCase,
   ) {}
 
   @Post()
@@ -83,19 +98,61 @@ export class DispatcherTransportOrdersController {
 
   @Post(':id/documents')
   @ApiOperation({
-    summary: 'Attach existing document to transport order (dispatcher)',
+    summary:
+      'Upload and attach document to transport order (dispatcher, single step)',
   })
-  async attachDocument(
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        title: { type: 'string', maxLength: 255 },
+      },
+      required: ['file', 'title'],
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_FILE_SIZE_BYTES },
+    }),
+  )
+  async uploadDocument(
+    @Session() session: UserSession,
     @Param('id') id: string,
-    @Body() dto: AttachDocumentDto,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({ fileType: /(jpe?g|png|webp)$/i })
+        .addMaxSizeValidator({ maxSize: MAX_FILE_SIZE_BYTES })
+        .build({
+          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+        }),
+    )
+    file: Express.Multer.File,
+    @Body() body: UploadDriverOrderDocumentDto,
   ) {
-    await this.attachDocumentUseCase.execute({
+    const document = await this.uploadDispatcherDocumentUseCase.execute({
+      currentUserId: session.user.id,
       orderId: id,
-      payload: dto,
-      source: 'DISPATCHER',
+      file: {
+        buffer: file.buffer,
+        mimeType: file.mimetype,
+        sizeBytes: file.size,
+        originalFilename: file.originalname,
+      },
+      payload: body,
     });
 
-    return { success: true };
+    return {
+      id: document.id.value,
+      url: document.url,
+      mimeType: document.mimeType,
+      sizeBytes: document.sizeBytes,
+      originalFilename: document.originalFilename,
+      description: document.description,
+      title: body.title,
+    };
   }
 
   @Delete('documents/:orderDocumentId')

@@ -2,14 +2,26 @@ import {
   Body,
   Controller,
   Get,
+  HttpStatus,
   Param,
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
+  ParseFilePipeBuilder,
 } from '@nestjs/common';
 import { Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 import { routesV1 } from 'src/config/app.routes';
 import { ListDriverTransportOrdersUseCase } from '../../application/use-cases/list-driver-transport-orders.usecase';
@@ -24,6 +36,11 @@ import { ReportTransportOrderProblemUseCase } from '../../application/use-cases/
 import { ReportTransportOrderProblemDto } from '../../application/dto/report-transport-order-problem.dto';
 import { Roles } from 'src/modules/auth/interface/http/roles.decorator';
 import { ROLE_DRIVER } from 'src/shared/constants/roles.constants';
+import { UploadDriverDocumentToTransportOrderUseCase } from '../../application/use-cases/upload-driver-document-to-transport-order.usecase';
+import { UploadDriverOrderDocumentDto } from '../../application/dto/upload-driver-order-document.dto';
+
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 @ApiTags('TransportOrders - Driver')
 @ApiBearerAuth()
@@ -37,6 +54,7 @@ export class DriverTransportOrdersController {
     private readonly updateStatusUseCase: UpdateDriverTransportOrderStatusUseCase,
     private readonly reportEventUseCase: ReportTransportOrderEventUseCase,
     private readonly reportProblemUseCase: ReportTransportOrderProblemUseCase,
+    private readonly uploadDriverDocumentUseCase: UploadDriverDocumentToTransportOrderUseCase,
   ) {}
 
   @Get()
@@ -179,6 +197,65 @@ export class DriverTransportOrdersController {
         description: event.description,
         createdAt: event.createdAt,
       })),
+    };
+  }
+
+  @Post(':id/documents')
+  @ApiOperation({
+    summary:
+      'Upload and attach document to assigned transport order (driver only)',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        title: { type: 'string', maxLength: 255 },
+      },
+      required: ['file', 'title'],
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_FILE_SIZE_BYTES },
+    }),
+  )
+  async uploadDocument(
+    @Session() session: UserSession,
+    @Param('id') id: string,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({ fileType: /(jpe?g|png|webp)$/i })
+        .addMaxSizeValidator({ maxSize: MAX_FILE_SIZE_BYTES })
+        .build({
+          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+        }),
+    )
+    file: Express.Multer.File,
+    @Body() body: UploadDriverOrderDocumentDto,
+  ) {
+    const document = await this.uploadDriverDocumentUseCase.execute({
+      currentUserId: session.user.id,
+      orderId: id,
+      file: {
+        buffer: file.buffer,
+        mimeType: file.mimetype,
+        sizeBytes: file.size,
+        originalFilename: file.originalname,
+      },
+      payload: body,
+    });
+
+    return {
+      id: document.id.value,
+      url: document.url,
+      mimeType: document.mimeType,
+      sizeBytes: document.sizeBytes,
+      originalFilename: document.originalFilename,
+      description: document.description,
+      title: body.title,
     };
   }
 

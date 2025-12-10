@@ -27,6 +27,6 @@ import { DocumentsPrismaRepository } from './infrastructure/presistence/document
     DeleteDocumentUseCase,
   ],
   controllers: [DocumentsController],
-  exports: [DOCUMENT_REPOSITORY],
+  exports: [DOCUMENT_REPOSITORY, UploadDocumentUseCase],
 })
 export class DocumentsModule {}
