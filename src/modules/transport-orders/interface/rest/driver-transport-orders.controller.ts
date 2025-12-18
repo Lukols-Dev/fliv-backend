@@ -200,6 +200,27 @@ export class DriverTransportOrdersController {
     };
   }
 
+  @Get(':id/documents')
+  @ApiOperation({ summary: 'List documents for transport order (driver)' })
+  async listDocuments(
+    @Session() session: UserSession,
+    @Param('id') id: string,
+  ) {
+    const order = await this.getDriverOrderUseCase.execute({
+      currentUserId: session.user.id,
+      orderId: id,
+    });
+
+    return order.documents.map((doc) => ({
+      id: doc.id.value,
+      url: doc.url,
+      mimeType: doc.mimeType,
+      sizeBytes: doc.sizeBytes,
+      originalFilename: doc.originalFilename,
+      description: doc.description,
+    }));
+  }
+
   @Post(':id/documents')
   @ApiOperation({
     summary:
