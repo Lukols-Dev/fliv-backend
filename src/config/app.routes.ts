@@ -10,6 +10,7 @@ const rolesRoot = 'roles';
 const transportOrdersRoot = 'transport-orders';
 const notificationsRoot = 'notifications';
 const authRoot = 'auth';
+const documentsRoot = 'documents';
 
 const driverRoot = 'driver';
 const dispatcherRoot = 'dispatcher';
@@ -46,5 +47,9 @@ export const routesV1 = {
 
   notifications: {
     root: notificationsRoot,
+  },
+
+  documents: {
+    root: documentsRoot,
   },
 } as const;

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../infrastructure/prisma/prisma.module';
+import { DocumentsModule } from 'src/modules/documents/documents.module';
 
 import { USER_REPOSITORY } from './application/ports/user.repository.port';
 import { ROLE_REPOSITORY } from './application/ports/role.repository.port';
@@ -22,9 +23,10 @@ import { DeleteUserUseCase } from './application/use-cases/delete-user.usecase';
 import { DeleteDriverProfileUseCase } from './application/use-cases/delete-driver-profile.usecase';
 import { GetDriverProfileUseCase } from './application/use-cases/get-driver-profile.usecase';
 import { GetCurrentUserUseCase } from './application/use-cases/get-current-user.usecase';
+import { UploadUserAvatarUseCase } from './application/use-cases/upload-user-avatar.usecase';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, DocumentsModule],
   providers: [
     {
       provide: USER_REPOSITORY,
@@ -48,6 +50,7 @@ import { GetCurrentUserUseCase } from './application/use-cases/get-current-user.
     RegisterUserProfileUseCase,
     UpdateUserProfileUseCase,
     UpdateDriverUseCase,
+    UploadUserAvatarUseCase,
   ],
   controllers: [DriverRegistrationController, UsersController],
   exports: [USER_REPOSITORY],

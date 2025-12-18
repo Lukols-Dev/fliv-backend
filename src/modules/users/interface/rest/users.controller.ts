@@ -1,29 +1,48 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   Delete,
   Get,
+  HttpStatus,
   Param,
   Patch,
   Post,
-  UseGuards,
+  UploadedFile,
+  UseInterceptors,
+  ParseFilePipeBuilder,
 } from '@nestjs/common';
-import { AuthGuard, Session } from '@thallesp/nestjs-better-auth';
+import { Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 
 import { ActivateUserDto } from '../../application/dto/activate-user.dto';
 import { ActivateUserUseCase } from '../../application/use-cases/activate-user.usecase';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { RegisterUserProfileDto } from '../../application/dto/register-user-profile.dto';
 import { RegisterUserProfileUseCase } from '../../application/use-cases/register-user-profile.usecase';
 import { UpdateUserProfileDto } from '../../application/dto/update-user-profile.dto';
 import { UpdateUserProfileUseCase } from '../../application/use-cases/update-user-profile.usecase';
 import { DeleteUserUseCase } from '../../application/use-cases/delete-user.usecase';
 import { GetCurrentUserUseCase } from '../../application/use-cases/get-current-user.usecase';
+import { Roles } from 'src/modules/auth/interface/http/roles.decorator';
+import { ROLE_ADMIN } from 'src/shared/constants/roles.constants';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { UploadUserAvatarUseCase } from '../../application/use-cases/upload-user-avatar.usecase';
+import type { LocalFile } from 'src/modules/documents/application/ports/file-storage.port';
+
+const MAX_AVATAR_FILE_SIZE_MB = 10;
+const MAX_AVATAR_FILE_SIZE_BYTES = MAX_AVATAR_FILE_SIZE_MB * 1024 * 1024;
+
 @ApiTags('Users')
 @ApiBearerAuth()
 @Controller('users')
-@UseGuards(AuthGuard)
 export class UsersController {
   constructor(
     private readonly registerUserProfileUseCase: RegisterUserProfileUseCase,
@@ -31,6 +50,7 @@ export class UsersController {
     private readonly activateUserUseCase: ActivateUserUseCase,
     private readonly deleteUserUseCase: DeleteUserUseCase,
     private readonly getCurrentUserUseCase: GetCurrentUserUseCase,
+    private readonly uploadUserAvatarUseCase: UploadUserAvatarUseCase,
   ) {}
 
   @Post('profile')
@@ -64,8 +84,60 @@ export class UsersController {
     return { success: true };
   }
 
-  // TODO: only ADMIN – for now, no roles guard
+  @Post('avatar')
+  @ApiOperation({ summary: 'Upload current user avatar (Cloudinary)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+      required: ['file'],
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_AVATAR_FILE_SIZE_BYTES },
+    }),
+  )
+  async uploadAvatar(
+    @Session() session: UserSession,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({ fileType: /(jpe?g|png|webp)$/i })
+        .addMaxSizeValidator({ maxSize: MAX_AVATAR_FILE_SIZE_BYTES })
+        .build({
+          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+        }),
+    )
+    file: Express.Multer.File,
+  ): Promise<{ avatarUrl: string }> {
+    if (!file?.buffer) {
+      throw new BadRequestException('File buffer is missing');
+    }
+
+    const localFile: LocalFile = {
+      buffer: file.buffer,
+      mimeType: file.mimetype,
+      sizeBytes: file.size,
+      originalFilename: file.originalname,
+    };
+
+    const result = await this.uploadUserAvatarUseCase.execute({
+      currentUserId: session.user.id,
+      file: localFile,
+    });
+
+    return { avatarUrl: result.avatarUrl };
+  }
+
   @Post('activate')
+  @Roles(ROLE_ADMIN)
   async activateUser(
     @Body() dto: ActivateUserDto,
   ): Promise<{ success: boolean }> {
@@ -92,6 +164,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @Roles(ROLE_ADMIN)
   @ApiOperation({
     summary: 'Delete user by id (admin)',
     description:

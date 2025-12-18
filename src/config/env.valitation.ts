@@ -14,6 +14,11 @@ export const envSchema = z.object({
   API_PREFIX: z.string().optional(),
 
   SWAGGER_ENABLED: z.string().optional(),
+
+  CLOUDINARY_CLOUD_NAME: z.string().min(1),
+  CLOUDINARY_API_KEY: z.string().min(1),
+  CLOUDINARY_API_SECRET: z.string().min(1),
+  CLOUDINARY_DEFAULT_FOLDER: z.string().min(1).default('fliv'),
 });
 
 export type EnvVars = z.infer<typeof envSchema>;

@@ -1,5 +1,5 @@
 import {
-  BadRequestException,
+  // BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
@@ -45,9 +45,9 @@ export class RegisterDriverUseCase {
       throw new NotFoundException('User does not exist');
     }
 
-    if (!user.isActive) {
-      throw new BadRequestException('Account is not active');
-    }
+    // if (!user.isActive) {
+    //   throw new BadRequestException('Account is not active');
+    // }
 
     // 1. Update basic user data (names, phone, consents)
     await this.userRepository.update(userId, {

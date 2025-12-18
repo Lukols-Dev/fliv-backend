@@ -10,6 +10,10 @@ import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 
 import { UsersModule } from './modules/users/users.module';
 import { betterAuthClient } from './infrastructure/auth/better-auth.client';
+import { TransportOrdersModule } from './modules/transport-orders/transport-orders.module';
+import { DocumentsModule } from './modules/documents/documents.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -20,11 +24,14 @@ import { betterAuthClient } from './infrastructure/auth/better-auth.client';
     LoggingModule,
     PrismaModule,
 
-    BetterAuthModule.forRoot({ auth: betterAuthClient }),
-
     //domeain / features modules
-    //TODO: AuthModule, UsersModule, RolesModule, TransportOrdersModule, NotificationsModule, DriverModule, DispatcherModule
+    //TODO: RolesModule, NotificationsModule, DriverModule, DispatcherModule
+    BetterAuthModule.forRoot({ auth: betterAuthClient }),
+    AuthModule,
     UsersModule,
+    TransportOrdersModule,
+    DocumentsModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [
