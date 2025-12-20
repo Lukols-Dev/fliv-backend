@@ -1,7 +1,6 @@
 import type {
   TransportOrder as PrismaTransportOrder,
   OrderDocument as PrismaTransportOrderDocument,
-  Document as PrismaDocument,
   TransportOrderEvent as PrismaTransportOrderEvent,
   TransportOrderStatus as PrismaTransportOrderStatus,
   TransportOrderEventType as PrismaTransportOrderEventType,
@@ -16,9 +15,7 @@ import { TransportOrderEventId } from '../../domain/value-objects/transport-orde
 import { TransportOrderEventType } from '../../domain/value-objects/transport-order-event-type.vo';
 
 type TransportOrderWithDocuments = PrismaTransportOrder & {
-  orderDocuments: (PrismaTransportOrderDocument & {
-    document: PrismaDocument;
-  })[];
+  orderDocuments: PrismaTransportOrderDocument[];
   events?: PrismaTransportOrderEvent[];
 };
 
@@ -30,11 +27,11 @@ export class TransportOrderMapper {
           new TransportOrderDocumentId(orderDoc.id),
           orderDoc.title ?? null,
           orderDoc.createdAt,
-          orderDoc.document.url,
-          orderDoc.document.mimeType,
-          orderDoc.document.sizeBytes ?? null,
-          orderDoc.document.originalFilename ?? null,
-          orderDoc.document.description ?? null,
+          orderDoc.url,
+          orderDoc.mimeType,
+          orderDoc.sizeBytes ?? null,
+          orderDoc.originalFilename ?? null,
+          orderDoc.description ?? null,
         ),
     );
 

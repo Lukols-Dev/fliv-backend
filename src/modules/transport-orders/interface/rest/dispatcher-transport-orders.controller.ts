@@ -132,7 +132,16 @@ export class DispatcherTransportOrdersController {
     file: Express.Multer.File,
     @Body() body: UploadDriverOrderDocumentDto,
   ) {
-    const document = await this.uploadDispatcherDocumentUseCase.execute({
+    const {
+      orderDocumentId,
+      orderDocumentCreatedAt,
+      title,
+      url,
+      mimeType,
+      sizeBytes,
+      originalFilename,
+      description,
+    } = await this.uploadDispatcherDocumentUseCase.execute({
       currentUserId: session.user.id,
       orderId: id,
       file: {
@@ -145,13 +154,14 @@ export class DispatcherTransportOrdersController {
     });
 
     return {
-      id: document.id.value,
-      url: document.url,
-      mimeType: document.mimeType,
-      sizeBytes: document.sizeBytes,
-      originalFilename: document.originalFilename,
-      description: document.description,
-      title: body.title,
+      id: orderDocumentId,
+      title: title ?? body.title,
+      createdAt: orderDocumentCreatedAt,
+      url,
+      mimeType,
+      sizeBytes,
+      originalFilename,
+      description,
     };
   }
 

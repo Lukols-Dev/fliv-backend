@@ -4,12 +4,7 @@ import {
   TRANSPORT_ORDER_REPOSITORY,
   type TransportOrderRepositoryPort,
 } from '../ports/transport-order.repository.port';
-import {
-  ORDER_DOCUMENT_REPOSITORY,
-  type OrderDocumentRepositoryPort,
-} from '../ports/order-document.repository.port';
 import { TransportOrder } from '../../domain/entities/transport-order.entity';
-import { TransportOrderId } from '../../domain/value-objects/transport-order-id.vo';
 
 export interface CreateTransportOrderInput {
   currentUserId: string;
@@ -21,8 +16,6 @@ export class CreateTransportOrderUseCase {
   constructor(
     @Inject(TRANSPORT_ORDER_REPOSITORY)
     private readonly transportOrderRepository: TransportOrderRepositoryPort,
-    @Inject(ORDER_DOCUMENT_REPOSITORY)
-    private readonly orderDocumentRepository: OrderDocumentRepositoryPort,
   ) {}
 
   async execute(input: CreateTransportOrderInput): Promise<TransportOrder> {
@@ -50,17 +43,6 @@ export class CreateTransportOrderUseCase {
       notes: payload.notes ?? null,
       createdByUserId: currentUserId,
     });
-
-    if (payload.attachments && payload.attachments.length > 0) {
-      const orderId = new TransportOrderId(created.id.value);
-      for (const attachment of payload.attachments) {
-        await this.orderDocumentRepository.attachToTransportOrder(orderId, {
-          documentId: attachment.documentId,
-          title: attachment.title ?? null,
-          source: 'DISPATCHER',
-        });
-      }
-    }
 
     return created;
   }

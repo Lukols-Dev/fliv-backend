@@ -6,19 +6,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  MaxLength,
 } from 'class-validator';
-
-class CreateTransportOrderAttachmentDto {
-  @IsString()
-  @IsNotEmpty()
-  documentId!: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  title?: string;
-}
 
 export class CreateTransportOrderDto {
   @IsString()
@@ -95,7 +83,4 @@ export class CreateTransportOrderDto {
   @IsOptional()
   @IsString()
   notes?: string | null;
-
-  @IsOptional()
-  attachments?: CreateTransportOrderAttachmentDto[];
 }

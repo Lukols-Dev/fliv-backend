@@ -13,7 +13,6 @@ import { TransportOrderEventPrismaRepository } from './infrastructure/presistenc
 import { CreateTransportOrderUseCase } from './application/use-cases/create-transport-order.usecase';
 import { UpdateTransportOrderUseCase } from './application/use-cases/update-transport-order.usecase';
 import { DeleteTransportOrderUseCase } from './application/use-cases/delete-transport-order.usecase';
-import { AttachDocumentToTransportOrderUseCase } from './application/use-cases/attach-document-to-transport-order.usecase';
 import { DetachDocumentFromTransportOrderUseCase } from './application/use-cases/detach-document-from-transport-order.usecase';
 import { ListDispatcherTransportOrdersUseCase } from './application/use-cases/list-dispatcher-transport-orders.usecase';
 import { GetDispatcherTransportOrderUseCase } from './application/use-cases/get-dispatcher-transport-order.usecase';
@@ -47,7 +46,6 @@ import { DriverTransportOrdersController } from './interface/rest/driver-transpo
     CreateTransportOrderUseCase,
     UpdateTransportOrderUseCase,
     DeleteTransportOrderUseCase,
-    AttachDocumentToTransportOrderUseCase,
     DetachDocumentFromTransportOrderUseCase,
     ListDispatcherTransportOrdersUseCase,
     GetDispatcherTransportOrderUseCase,

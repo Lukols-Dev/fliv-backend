@@ -32,10 +32,10 @@ model User {
 
   roles                   UserRole[]
   driverProfile           DriverProfile?
-  documents               Document[]
   notifications           Notification[]
   transportOrders         TransportOrder[] @relation("CreatedByUser")
   assignedTransportOrders TransportOrder[] @relation("AssignedDriver")
+  uploadedOrderDocuments  OrderDocument[]  @relation("OrderDocumentUploadedBy")
 
   accounts Account[]
   sessions Session[]
@@ -138,20 +138,20 @@ model DriverProfile {
 // --- Transport Order ---
 
 enum TransportOrderStatus {
-  PENDING      
-  ACCEPTED     
-  IN_PROGRESS  
-  LOADING      
-  UNLOADING    
-  PAUSED       
-  COMPLETED    
-  PROBLEM      
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  LOADING
+  UNLOADING
+  PAUSED
+  COMPLETED
+  PROBLEM
 }
 
 enum DocumentSource {
-  DRIVER      
-  DISPATCHER  
-  SYSTEM      
+  DRIVER
+  DISPATCHER
+  SYSTEM
 }
 
 enum TransportOrderEventType {
@@ -242,42 +242,27 @@ model Notification {
   @@index([userId])
 }
 
-model Document {
-  id          String   @id @default(cuid())
+model OrderDocument {
+  id String @id @default(cuid())
 
-  url         String
-  storageKey  String   @unique
-  mimeType    String
+  transportOrderId String
+  transportOrder   TransportOrder @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
 
-  sizeBytes       Int?
+  url              String
+  storageKey       String  @unique
+  mimeType         String
+  sizeBytes        Int?
   originalFilename String?
   description      String?
 
   uploadedByUserId String?
-  uploadedByUser   User? @relation(fields: [uploadedByUserId], references: [id])
+  uploadedByUser   User?   @relation("OrderDocumentUploadedBy", fields: [uploadedByUserId], references: [id])
 
-  createdAt   DateTime @default(now())
+  source DocumentSource @default(DISPATCHER)
+  title  String?
 
-  orderLinks  OrderDocument[]
-
-  @@index([uploadedByUserId])
-}
-
-model OrderDocument {
-  id          String   @id @default(cuid())
-
-  transportOrderId String?
-  transportOrder   TransportOrder? @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
-
-  documentId String
-  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  source     DocumentSource @default(DISPATCHER)
-
-  title      String?
-
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([transportOrderId])
-  @@index([documentId])
+  @@index([uploadedByUserId])
 }

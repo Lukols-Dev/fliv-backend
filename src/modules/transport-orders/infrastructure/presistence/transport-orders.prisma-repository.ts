@@ -18,7 +18,7 @@ import { UserId } from 'src/modules/users/domain/value-objects/user-id.vo';
 
 type TransportOrderWithDocuments = Prisma.TransportOrderGetPayload<{
   include: {
-    orderDocuments: { include: { document: true } };
+    orderDocuments: true;
     events: { orderBy: { createdAt: 'asc' } };
   };
 }>;
@@ -33,11 +33,7 @@ export class TransportOrdersPrismaRepository
     const record = await this.prisma.transportOrder.findUnique({
       where: { id: id.value },
       include: {
-        orderDocuments: {
-          include: {
-            document: true,
-          },
-        },
+        orderDocuments: true,
         events: {
           orderBy: { createdAt: 'asc' },
         },
@@ -55,11 +51,7 @@ export class TransportOrdersPrismaRepository
     const record = await this.prisma.transportOrder.findUnique({
       where: { ztNumber },
       include: {
-        orderDocuments: {
-          include: {
-            document: true,
-          },
-        },
+        orderDocuments: true,
         events: {
           orderBy: { createdAt: 'asc' },
         },
@@ -98,11 +90,7 @@ export class TransportOrdersPrismaRepository
         createdByUserId: input.createdByUserId,
       },
       include: {
-        orderDocuments: {
-          include: {
-            document: true,
-          },
-        },
+        orderDocuments: true,
         events: {
           orderBy: { createdAt: 'asc' },
         },
@@ -141,11 +129,7 @@ export class TransportOrdersPrismaRepository
         status: input.status,
       },
       include: {
-        orderDocuments: {
-          include: {
-            document: true,
-          },
-        },
+        orderDocuments: true,
         events: {
           orderBy: { createdAt: 'asc' },
         },
@@ -198,11 +182,7 @@ export class TransportOrdersPrismaRepository
         skip,
         take,
         include: {
-          orderDocuments: {
-            include: {
-              document: true,
-            },
-          },
+          orderDocuments: true,
           events: {
             orderBy: { createdAt: 'asc' },
           },
@@ -249,11 +229,7 @@ export class TransportOrdersPrismaRepository
         skip,
         take,
         include: {
-          orderDocuments: {
-            include: {
-              document: true,
-            },
-          },
+          orderDocuments: true,
           events: {
             orderBy: { createdAt: 'asc' },
           },
@@ -270,11 +246,7 @@ export class TransportOrdersPrismaRepository
       where: { id: orderId.value },
       data: { assignedDriverUserId: driverUserId.value },
       include: {
-        orderDocuments: {
-          include: {
-            document: true,
-          },
-        },
+        orderDocuments: true,
         events: {
           orderBy: { createdAt: 'asc' },
         },

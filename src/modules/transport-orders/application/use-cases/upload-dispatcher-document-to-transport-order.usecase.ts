@@ -12,7 +12,6 @@ import {
 } from '../ports/order-document.repository.port';
 import { TransportOrderId } from '../../domain/value-objects/transport-order-id.vo';
 import { UploadDriverOrderDocumentDto } from '../dto/upload-driver-order-document.dto';
-import { Document } from 'src/modules/documents/domain/entities/document.entity';
 
 export interface UploadDispatcherDocumentInput {
   currentUserId: string;
@@ -31,7 +30,16 @@ export class UploadDispatcherDocumentToTransportOrderUseCase {
     private readonly orderDocumentRepository: OrderDocumentRepositoryPort,
   ) {}
 
-  async execute(input: UploadDispatcherDocumentInput): Promise<Document> {
+  async execute(input: UploadDispatcherDocumentInput): Promise<{
+    orderDocumentId: string;
+    orderDocumentCreatedAt: Date;
+    title: string | null;
+    url: string;
+    mimeType: string;
+    sizeBytes: number | null;
+    originalFilename: string | null;
+    description: string | null;
+  }> {
     const orderId = new TransportOrderId(input.orderId);
 
     const order = await this.transportOrderRepository.findById(orderId);
@@ -39,18 +47,34 @@ export class UploadDispatcherDocumentToTransportOrderUseCase {
       throw new NotFoundException('Transport order not found');
     }
 
-    const document = await this.uploadDocumentUseCase.execute({
-      currentUserId: input.currentUserId,
+    const uploaded = await this.uploadDocumentUseCase.execute({
       file: input.file,
-      payload: { description: undefined },
     });
 
-    await this.orderDocumentRepository.attachToTransportOrder(orderId, {
-      documentId: document.id.value,
-      title: input.payload.title,
-      source: 'DISPATCHER',
-    });
+    const attached = await this.orderDocumentRepository.attachToTransportOrder(
+      orderId,
+      {
+        title: input.payload.title,
+        source: 'DISPATCHER',
+        url: uploaded.url,
+        storageKey: uploaded.storageKey,
+        mimeType: uploaded.mimeType,
+        sizeBytes: uploaded.sizeBytes ?? null,
+        originalFilename: uploaded.originalFilename ?? null,
+        description: null,
+        uploadedByUserId: input.currentUserId,
+      },
+    );
 
-    return document;
+    return {
+      orderDocumentId: attached.orderDocumentId,
+      orderDocumentCreatedAt: attached.createdAt,
+      title: attached.title,
+      url: attached.url,
+      mimeType: attached.mimeType,
+      sizeBytes: attached.sizeBytes,
+      originalFilename: attached.originalFilename,
+      description: attached.description,
+    };
   }
 }
