@@ -28,6 +28,8 @@ export class TransportOrderMapper {
       (orderDoc) =>
         new TransportOrderDocument(
           new TransportOrderDocumentId(orderDoc.id),
+          orderDoc.title ?? null,
+          orderDoc.createdAt,
           orderDoc.document.url,
           orderDoc.document.mimeType,
           orderDoc.document.sizeBytes ?? null,
@@ -37,9 +39,7 @@ export class TransportOrderMapper {
     );
 
     const assignedDriver =
-      record.assignedDriverUserId != null
-        ? (record.assignedDriverUserId as string)
-        : null;
+      record.assignedDriverUserId != null ? record.assignedDriverUserId : null;
 
     return new TransportOrder(
       new TransportOrderId(record.id),

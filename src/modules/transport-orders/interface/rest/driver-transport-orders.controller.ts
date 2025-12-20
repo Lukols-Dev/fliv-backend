@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -38,6 +40,7 @@ import { Roles } from 'src/modules/auth/interface/http/roles.decorator';
 import { ROLE_DRIVER } from 'src/shared/constants/roles.constants';
 import { UploadDriverDocumentToTransportOrderUseCase } from '../../application/use-cases/upload-driver-document-to-transport-order.usecase';
 import { UploadDriverOrderDocumentDto } from '../../application/dto/upload-driver-order-document.dto';
+import { DetachDocumentFromTransportOrderUseCase } from '../../application/use-cases/detach-document-from-transport-order.usecase';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -55,6 +58,7 @@ export class DriverTransportOrdersController {
     private readonly reportEventUseCase: ReportTransportOrderEventUseCase,
     private readonly reportProblemUseCase: ReportTransportOrderProblemUseCase,
     private readonly uploadDriverDocumentUseCase: UploadDriverDocumentToTransportOrderUseCase,
+    private readonly detachDocumentUseCase: DetachDocumentFromTransportOrderUseCase,
   ) {}
 
   @Get()
@@ -213,6 +217,8 @@ export class DriverTransportOrdersController {
 
     return order.documents.map((doc) => ({
       id: doc.id.value,
+      title: doc.title ?? null,
+      createdAt: doc.createdAt,
       url: doc.url,
       mimeType: doc.mimeType,
       sizeBytes: doc.sizeBytes,
@@ -280,6 +286,31 @@ export class DriverTransportOrdersController {
     };
   }
 
+  @Delete(':id/documents/:orderDocumentId')
+  @ApiOperation({
+    summary: 'Detach document from assigned transport order (driver)',
+  })
+  async detachDocument(
+    @Session() session: UserSession,
+    @Param('id') id: string,
+    @Param('orderDocumentId') orderDocumentId: string,
+  ) {
+    const order = await this.getDriverOrderUseCase.execute({
+      currentUserId: session.user.id,
+      orderId: id,
+    });
+
+    const existsOnOrder = order.documents.some(
+      (doc) => doc.id.value === orderDocumentId,
+    );
+    if (!existsOnOrder) {
+      throw new NotFoundException('Order document not found');
+    }
+
+    await this.detachDocumentUseCase.execute({ orderDocumentId });
+    return { success: true };
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get transport order details for driver' })
   async getOne(@Session() session: UserSession, @Param('id') id: string) {
@@ -304,6 +335,8 @@ export class DriverTransportOrdersController {
       notes: order.notes,
       documents: order.documents.map((doc) => ({
         id: doc.id.value,
+        title: doc.title ?? null,
+        createdAt: doc.createdAt,
         url: doc.url,
         mimeType: doc.mimeType,
         sizeBytes: doc.sizeBytes,

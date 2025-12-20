@@ -227,6 +227,8 @@ export class DispatcherTransportOrdersController {
       notes: order.notes,
       documents: order.documents.map((doc) => ({
         id: doc.id.value,
+        title: doc.title ?? null,
+        createdAt: doc.createdAt,
         url: doc.url,
         mimeType: doc.mimeType,
         sizeBytes: doc.sizeBytes,
