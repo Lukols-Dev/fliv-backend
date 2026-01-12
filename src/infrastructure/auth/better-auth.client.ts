@@ -1,5 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { betterAuth } from 'better-auth';
+import { APIError, betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { PrismaClient } from 'generated/prisma/client';
 
@@ -21,6 +21,43 @@ export const betterAuthClient = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  user: {
+    additionalFields: {
+      firstName: {
+        type: 'string',
+        required: true,
+      },
+      lastName: {
+        type: 'string',
+        required: true,
+      },
+      isAgreedToTerms: {
+        type: 'boolean',
+        required: true,
+      },
+      isAgreedToPrivacyPolicy: {
+        type: 'boolean',
+        required: true,
+      },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          if (!user.isAgreedToTerms || !user.isAgreedToPrivacyPolicy) {
+            throw new APIError('BAD_REQUEST', {
+              message:
+                'You must accept the terms and privacy policy to create an account.',
+            });
+          }
+
+          await Promise.resolve();
+          return { data: user };
+        },
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
   },
