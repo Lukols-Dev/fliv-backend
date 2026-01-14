@@ -49,6 +49,15 @@ async function bootstrap() {
     }),
   );
 
+  // CORS configuration
+  const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+  app.enableCors({
+    origin: frontendUrl,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    credentials: true,
+  });
+
   app.enableShutdownHooks();
 
   await app.listen(appConfig.port);
