@@ -8,6 +8,10 @@ import { UserId } from '../../domain/value-objects/user-id.vo';
 export interface CurrentUserResult {
   id: string;
   email: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  avatarUrl: string | null;
   roles: string[];
   isActive: boolean;
 }
@@ -30,6 +34,10 @@ export class GetCurrentUserUseCase {
     return {
       id: user.id,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      avatarUrl: user.avatarUrl,
       roles: user.roles,
       isActive: user.isActive,
     };
