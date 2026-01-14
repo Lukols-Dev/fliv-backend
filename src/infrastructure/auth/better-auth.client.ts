@@ -1,6 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { APIError, betterAuth } from 'better-auth';
+import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { customSession } from 'better-auth/plugins';
 import { PrismaClient } from 'generated/prisma/client';
 
@@ -16,12 +17,50 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
+const ACCOUNT_NOT_ACTIVE_ERROR_CODE = 'ACCOUNT_NOT_ACTIVE';
+
 export const betterAuthClient = betterAuth({
   url: process.env.BETTER_AUTH_URL,
   secret: process.env.BETTER_AUTH_SECRET as string,
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      // Block sign-in when user is inactive or has no role assigned
+      if (ctx.path !== '/sign-in/email') return;
+
+      if (!ctx.body || typeof ctx.body !== 'object') return;
+      const body = ctx.body as Record<string, unknown>;
+      const emailRaw = body.email;
+      if (typeof emailRaw !== 'string') return;
+      const email = emailRaw.trim().toLowerCase();
+      if (!email) return;
+
+      const user = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          isActive: true,
+          roles: {
+            select: {
+              role: { select: { key: true } },
+            },
+          },
+        },
+      });
+
+      // If user doesn't exist, let Better Auth handle invalid credentials
+      if (!user) return;
+
+      const hasAnyRole = (user.roles?.length ?? 0) > 0;
+      if (!user.isActive || !hasAnyRole) {
+        throw new APIError('UNAUTHORIZED', {
+          code: ACCOUNT_NOT_ACTIVE_ERROR_CODE,
+          message: 'Account is not active. Please contact the administrator.',
+        });
+      }
+    }),
+  },
   user: {
     additionalFields: {
       firstName: {
