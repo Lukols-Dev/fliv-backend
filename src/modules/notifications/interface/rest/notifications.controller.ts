@@ -6,6 +6,7 @@ import { routesV1 } from 'src/config/app.routes';
 import { ListUserNotificationsUseCase } from '../../application/use-cases/list-user-notifications.usecase';
 import { MarkNotificationReadUseCase } from '../../application/use-cases/mark-notification-read.usecase';
 import { DeleteNotificationUseCase } from '../../application/use-cases/delete-notification.usecase';
+import { ClearAllNotificationsUseCase } from '../../application/use-cases/clear-all-notifications.usecase';
 import { Roles } from 'src/modules/auth/interface/http/roles.decorator';
 import { ROLE_DISPATCHER } from 'src/shared/constants/roles.constants';
 
@@ -18,6 +19,7 @@ export class NotificationsController {
     private readonly listUseCase: ListUserNotificationsUseCase,
     private readonly markReadUseCase: MarkNotificationReadUseCase,
     private readonly deleteUseCase: DeleteNotificationUseCase,
+    private readonly clearAllUseCase: ClearAllNotificationsUseCase,
   ) {}
 
   @Get()
@@ -53,6 +55,16 @@ export class NotificationsController {
       createdAt: notification.createdAt,
       readAt: notification.readAt,
     };
+  }
+
+  @Delete()
+  @ApiOperation({ summary: 'Clear all notifications for current user' })
+  async clearAll(@Session() session: UserSession) {
+    await this.clearAllUseCase.execute({
+      currentUserId: session.user.id,
+    });
+
+    return { success: true };
   }
 
   @Delete(':id')

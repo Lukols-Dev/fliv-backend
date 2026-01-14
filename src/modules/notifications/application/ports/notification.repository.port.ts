@@ -17,4 +17,5 @@ export interface NotificationRepositoryPort {
   listForUser(userId: UserId): Promise<Notification[]>;
   findById(id: NotificationId): Promise<Notification | null>;
   delete(id: NotificationId): Promise<void>;
+  deleteAllForUser(userId: UserId): Promise<void>;
 }

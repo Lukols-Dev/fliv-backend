@@ -6,6 +6,7 @@ import { CreateNotificationUseCase } from './application/use-cases/create-notifi
 import { ListUserNotificationsUseCase } from './application/use-cases/list-user-notifications.usecase';
 import { MarkNotificationReadUseCase } from './application/use-cases/mark-notification-read.usecase';
 import { DeleteNotificationUseCase } from './application/use-cases/delete-notification.usecase';
+import { ClearAllNotificationsUseCase } from './application/use-cases/clear-all-notifications.usecase';
 import { NotificationsController } from './interface/rest/notifications.controller';
 
 @Module({
@@ -19,6 +20,7 @@ import { NotificationsController } from './interface/rest/notifications.controll
     ListUserNotificationsUseCase,
     MarkNotificationReadUseCase,
     DeleteNotificationUseCase,
+    ClearAllNotificationsUseCase,
   ],
   exports: [
     NOTIFICATION_REPOSITORY,
@@ -26,6 +28,7 @@ import { NotificationsController } from './interface/rest/notifications.controll
     ListUserNotificationsUseCase,
     MarkNotificationReadUseCase,
     DeleteNotificationUseCase,
+    ClearAllNotificationsUseCase,
   ],
   controllers: [NotificationsController],
 })

@@ -17,7 +17,6 @@ export class NotificationsPrismaRepository
   constructor(private readonly prisma: PrismaService) {}
 
   async create(input: CreateNotificationInput): Promise<Notification> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const created = await this.prisma.notification.create({
       data: {
         userId: input.userId.value,
@@ -30,7 +29,6 @@ export class NotificationsPrismaRepository
   }
 
   async markAsRead(id: NotificationId): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await this.prisma.notification.update({
       where: { id: id.value },
       data: { readAt: new Date() },
@@ -38,7 +36,6 @@ export class NotificationsPrismaRepository
   }
 
   async listForUser(userId: UserId): Promise<Notification[]> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const rows: PrismaNotification[] = await this.prisma.notification.findMany({
       where: { userId: userId.value },
       orderBy: { createdAt: 'desc' },
@@ -48,7 +45,6 @@ export class NotificationsPrismaRepository
   }
 
   async findById(id: NotificationId): Promise<Notification | null> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const row = await this.prisma.notification.findUnique({
       where: { id: id.value },
     });
@@ -57,9 +53,14 @@ export class NotificationsPrismaRepository
   }
 
   async delete(id: NotificationId): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await this.prisma.notification.delete({
       where: { id: id.value },
+    });
+  }
+
+  async deleteAllForUser(userId: UserId): Promise<void> {
+    await this.prisma.notification.deleteMany({
+      where: { userId: userId.value },
     });
   }
 }
