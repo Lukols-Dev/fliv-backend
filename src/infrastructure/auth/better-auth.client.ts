@@ -1,6 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { APIError, betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { customSession } from 'better-auth/plugins';
 import { PrismaClient } from 'generated/prisma/client';
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -65,4 +66,33 @@ export const betterAuthClient = betterAuth({
     disableOriginCheck: true, // TODO: remove this on production, ONLY FOR DEV!
   },
   trustedOrigins: [process.env.FRONTEND_URL ?? 'http://localhost:3000'],
+  plugins: [
+    customSession(async ({ user, session }) => {
+      // user.id pochodzi z Better Auth (to ten sam id co w tabeli User)
+      const userWithRoles = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: {
+          id: true,
+          roles: {
+            include: {
+              role: true, // Role.key
+            },
+          },
+        },
+      });
+
+      const roleKeys = userWithRoles?.roles.map((ur) => ur.role.key) ?? [];
+
+      return {
+        // możesz dodać role także jako osobne pole na root (opcjonalne)
+        // roles: roleKeys,
+
+        user: {
+          ...user,
+          roles: roleKeys, // 👈 finalnie będziesz mieć session.user.roles: string[]
+        },
+        session,
+      };
+    }),
+  ],
 });
