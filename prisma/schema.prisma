@@ -178,6 +178,7 @@ model TransportOrder {
   ztNumber    String   @unique
   pwNumber    String?
   status    TransportOrderStatus @default(PENDING)
+  timelinessStatus String?
 
   vehiclePlate      String
   trailerPlate      String?

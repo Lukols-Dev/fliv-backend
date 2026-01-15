@@ -70,6 +70,7 @@ export class TransportOrdersPrismaRepository
       data: {
         ztNumber: input.ztNumber,
         pwNumber: input.pwNumber ?? null,
+        timelinessStatus: input.timelinessStatus,
         vehiclePlate: input.vehiclePlate,
         trailerPlate: input.trailerPlate ?? null,
         driverFirstName: input.driverFirstName,

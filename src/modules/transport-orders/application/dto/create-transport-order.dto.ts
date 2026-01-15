@@ -17,6 +17,10 @@ export class CreateTransportOrderDto {
   @IsString()
   pwNumber?: string | null;
 
+  @IsOptional()
+  @IsString()
+  timelinessStatus!: string;
+
   @IsString()
   @IsNotEmpty()
   vehiclePlate!: string;

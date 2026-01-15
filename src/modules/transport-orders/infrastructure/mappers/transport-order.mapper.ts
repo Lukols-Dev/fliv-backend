@@ -43,6 +43,7 @@ export class TransportOrderMapper {
       record.ztNumber,
       record.pwNumber,
       mapPrismaStatus(record.status),
+      record.timelinessStatus ?? null,
       record.vehiclePlate,
       record.trailerPlate,
       record.driverFirstName,

@@ -9,6 +9,7 @@ export class TransportOrder {
     public ztNumber: string,
     public pwNumber: string | null,
     public status: TransportOrderStatus,
+    public timelinessStatus: string | null,
 
     public vehiclePlate: string,
     public trailerPlate: string | null,

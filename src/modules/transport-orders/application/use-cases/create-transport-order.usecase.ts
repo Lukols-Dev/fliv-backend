@@ -24,6 +24,7 @@ export class CreateTransportOrderUseCase {
     const created = await this.transportOrderRepository.create({
       ztNumber: payload.ztNumber,
       pwNumber: payload.pwNumber ?? null,
+      timelinessStatus: payload.timelinessStatus ?? null,
       vehiclePlate: payload.vehiclePlate,
       trailerPlate: payload.trailerPlate ?? null,
       driverFirstName: payload.driverFirstName,

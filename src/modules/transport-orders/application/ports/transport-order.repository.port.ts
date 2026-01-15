@@ -8,6 +8,7 @@ export const TRANSPORT_ORDER_REPOSITORY = Symbol('TRANSPORT_ORDER_REPOSITORY');
 export interface CreateTransportOrderInput {
   ztNumber: string;
   pwNumber?: string | null;
+  timelinessStatus?: string | null;
   vehiclePlate: string;
   trailerPlate?: string | null;
   driverFirstName: string;
