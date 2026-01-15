@@ -69,6 +69,7 @@ export class UpdateTransportOrderUseCase {
       toAddress: input.payload.toAddress,
       cargoWeightKg: input.payload.cargoWeightKg,
       loadingDate,
+      loadingTime: input.payload.loadingTime,
       cargoDescription: input.payload.cargoDescription,
       temperatureSensitive: input.payload.temperatureSensitive,
       notes: input.payload.notes,

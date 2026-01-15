@@ -25,6 +25,7 @@ export interface CreateTransportOrderInput {
   toAddress?: string | null;
   cargoWeightKg?: number | null;
   loadingDate?: Date | null;
+  loadingTime?: string | null;
   cargoDescription?: string | null;
   temperatureSensitive: boolean;
   notes?: string | null;
@@ -50,6 +51,7 @@ export interface UpdateTransportOrderInput {
   toAddress?: string | null;
   cargoWeightKg?: number | null;
   loadingDate?: Date | null;
+  loadingTime?: string | null;
   cargoDescription?: string | null;
   temperatureSensitive?: boolean;
   notes?: string | null;

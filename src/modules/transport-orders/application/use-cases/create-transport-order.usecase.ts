@@ -41,6 +41,7 @@ export class CreateTransportOrderUseCase {
       toAddress: payload.toAddress ?? null,
       cargoWeightKg: payload.cargoWeightKg ?? null,
       loadingDate: payload.loadingDate ? new Date(payload.loadingDate) : null,
+      loadingTime: payload.loadingTime ?? null,
       cargoDescription: payload.cargoDescription ?? null,
       temperatureSensitive: payload.temperatureSensitive,
       notes: payload.notes ?? null,

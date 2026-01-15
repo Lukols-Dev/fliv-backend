@@ -83,6 +83,10 @@ export class UpdateTransportOrderDto {
 
   @IsOptional()
   @IsString()
+  loadingTime?: string | null;
+
+  @IsOptional()
+  @IsString()
   cargoDescription?: string | null;
 
   @IsOptional()

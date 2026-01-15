@@ -30,6 +30,7 @@ export class TransportOrder {
     public toAddress: string | null,
     public cargoWeightKg: number | null,
     public loadingDate: Date | null,
+    public loadingTime: string | null,
     public cargoDescription: string | null,
     public temperatureSensitive: boolean,
     public notes: string | null,

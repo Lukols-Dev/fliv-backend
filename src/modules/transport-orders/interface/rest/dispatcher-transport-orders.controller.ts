@@ -239,6 +239,7 @@ export class DispatcherTransportOrdersController {
       toAddress: order.toAddress,
       cargoWeightKg: order.cargoWeightKg,
       loadingDate: order.loadingDate,
+      loadingTime: order.loadingTime,
       cargoDescription: order.cargoDescription,
       temperatureSensitive: order.temperatureSensitive,
       notes: order.notes,

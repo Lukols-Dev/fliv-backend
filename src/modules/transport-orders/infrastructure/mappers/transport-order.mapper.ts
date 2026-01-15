@@ -60,6 +60,7 @@ export class TransportOrderMapper {
       record.toAddress ?? null,
       record.cargoWeightKg,
       record.loadingDate,
+      record.loadingTime ?? null,
       record.cargoDescription,
       record.temperatureSensitive,
       record.notes,

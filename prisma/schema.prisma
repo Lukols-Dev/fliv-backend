@@ -198,6 +198,7 @@ model TransportOrder {
   toAddress         String?
   cargoWeightKg     Float?
   loadingDate       DateTime?
+  loadingTime       String?
   cargoDescription  String?
   temperatureSensitive Boolean @default(false)
   notes             String?

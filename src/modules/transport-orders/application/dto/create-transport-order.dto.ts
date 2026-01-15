@@ -87,6 +87,10 @@ export class CreateTransportOrderDto {
 
   @IsOptional()
   @IsString()
+  loadingTime?: string | null;
+
+  @IsOptional()
+  @IsString()
   cargoDescription?: string | null;
 
   @IsBoolean()
