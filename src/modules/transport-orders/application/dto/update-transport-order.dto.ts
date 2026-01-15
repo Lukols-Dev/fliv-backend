@@ -63,7 +63,15 @@ export class UpdateTransportOrderDto {
 
   @IsOptional()
   @IsString()
+  fromAddress?: string | null;
+
+  @IsOptional()
+  @IsString()
   toCountry?: string;
+
+  @IsOptional()
+  @IsString()
+  toAddress?: string | null;
 
   @IsOptional()
   @IsNumber()

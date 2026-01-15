@@ -193,7 +193,9 @@ model TransportOrder {
   payerEmail        String?
 
   fromCountry       String
+  fromAddress       String?
   toCountry         String
+  toAddress         String?
   cargoWeightKg     Float?
   loadingDate       DateTime?
   cargoDescription  String?

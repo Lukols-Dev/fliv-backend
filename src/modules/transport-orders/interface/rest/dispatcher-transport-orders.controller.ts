@@ -204,7 +204,12 @@ export class DispatcherTransportOrdersController {
       trailerPlate: order.trailerPlate,
       driverName:
         `${order.driverFirstName ?? ''} ${order.driverLastName ?? ''}`.trim(),
+      driverPhone: order.driverPhone,
       loadingDate: order.loadingDate,
+      fromCountry: order.fromCountry,
+      fromAddress: order.fromAddress,
+      toCountry: order.toCountry,
+      toAddress: order.toAddress,
     }));
   }
 
@@ -229,7 +234,9 @@ export class DispatcherTransportOrdersController {
       payerVatId: order.payerVatId,
       payerEmail: order.payerEmail,
       fromCountry: order.fromCountry,
+      fromAddress: order.fromAddress,
       toCountry: order.toCountry,
+      toAddress: order.toAddress,
       cargoWeightKg: order.cargoWeightKg,
       loadingDate: order.loadingDate,
       cargoDescription: order.cargoDescription,

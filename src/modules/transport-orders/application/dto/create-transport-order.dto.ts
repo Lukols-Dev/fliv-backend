@@ -65,9 +65,17 @@ export class CreateTransportOrderDto {
   @IsNotEmpty()
   fromCountry!: string;
 
+  @IsOptional()
+  @IsString()
+  fromAddress?: string | null;
+
   @IsString()
   @IsNotEmpty()
   toCountry!: string;
+
+  @IsOptional()
+  @IsString()
+  toAddress?: string | null;
 
   @IsOptional()
   @IsNumber()

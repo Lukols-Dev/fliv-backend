@@ -25,7 +25,9 @@ export class TransportOrder {
     public payerEmail: string | null,
 
     public fromCountry: string,
+    public fromAddress: string | null,
     public toCountry: string,
+    public toAddress: string | null,
     public cargoWeightKg: number | null,
     public loadingDate: Date | null,
     public cargoDescription: string | null,

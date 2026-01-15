@@ -20,7 +20,9 @@ export interface CreateTransportOrderInput {
   payerVatId?: string | null;
   payerEmail?: string | null;
   fromCountry: string;
+  fromAddress?: string | null;
   toCountry: string;
+  toAddress?: string | null;
   cargoWeightKg?: number | null;
   loadingDate?: Date | null;
   cargoDescription?: string | null;
@@ -43,7 +45,9 @@ export interface UpdateTransportOrderInput {
   payerVatId?: string | null;
   payerEmail?: string | null;
   fromCountry?: string;
+  fromAddress?: string | null;
   toCountry?: string;
+  toAddress?: string | null;
   cargoWeightKg?: number | null;
   loadingDate?: Date | null;
   cargoDescription?: string | null;
