@@ -5,6 +5,14 @@ import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { customSession } from 'better-auth/plugins';
 import { PrismaClient } from 'generated/prisma/client';
 
+type HeaderValue = string | string[] | undefined;
+
+type HeadersLike = Pick<Headers, 'get'> | Record<string, HeaderValue>;
+
+type CtxWithHeaders = {
+  headers?: HeadersLike;
+};
+
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
@@ -17,7 +25,49 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
-const ACCOUNT_NOT_ACTIVE_ERROR_CODE = 'ACCOUNT_NOT_ACTIVE';
+const X_CLIENT_HEADER = 'x-client';
+const X_CLIENT_MOBILE = 'mobile';
+const REQUIRED_MOBILE_ROLE_KEY = 'DRIVER';
+
+const GENERIC_AUTH_MESSAGE = 'Invalid email or password';
+const MOBILE_AUTH_DELAY_MS = 250;
+
+function sleep(ms: number) {
+  return new Promise((res) => setTimeout(res, ms));
+}
+
+function getHeader(ctx: CtxWithHeaders, name: string): string | null {
+  const h = ctx?.headers;
+  if (!h) return null;
+
+  if ('get' in h && typeof h.get === 'function') {
+    const v = h.get(name);
+    return typeof v === 'string' ? v : null;
+  }
+
+  const obj = h as Record<string, HeaderValue>;
+  const key = Object.keys(obj).find(
+    (k) => k.toLowerCase() === name.toLowerCase(),
+  );
+  if (!key) return null;
+
+  const v = obj[key];
+  if (typeof v === 'string') return v;
+  if (Array.isArray(v)) return v[0] ?? null;
+
+  return null;
+}
+
+function isMobileClient(ctx: CtxWithHeaders): boolean {
+  const raw = getHeader(ctx, X_CLIENT_HEADER);
+  return (raw ?? '').trim().toLowerCase() === X_CLIENT_MOBILE;
+}
+
+function throwGenericAuth() {
+  throw new APIError('UNAUTHORIZED', {
+    message: GENERIC_AUTH_MESSAGE,
+  });
+}
 
 export const betterAuthClient = betterAuth({
   url: process.env.BETTER_AUTH_URL,
@@ -27,16 +77,23 @@ export const betterAuthClient = betterAuth({
   }),
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
-      // Block sign-in when user is inactive or has no role assigned
       if (ctx.path !== '/sign-in/email') return;
+
+      const mobile = isMobileClient(ctx);
+
+      // Anti-enumeration: normalize response timing for mobile attempts.
+      if (mobile) await sleep(MOBILE_AUTH_DELAY_MS);
 
       if (!ctx.body || typeof ctx.body !== 'object') return;
       const body = ctx.body as Record<string, unknown>;
+
       const emailRaw = body.email;
       if (typeof emailRaw !== 'string') return;
+
       const email = emailRaw.trim().toLowerCase();
       if (!email) return;
 
+      // Fetch minimal user data
       const user = await prisma.user.findUnique({
         where: { email },
         select: {
@@ -49,15 +106,26 @@ export const betterAuthClient = betterAuth({
         },
       });
 
-      // If user doesn't exist, let Better Auth handle invalid credentials
+      // If user doesn't exist -> let Better Auth handle invalid credentials.
+      // (No extra signals; message remains generic.)
       if (!user) return;
 
-      const hasAnyRole = (user.roles?.length ?? 0) > 0;
-      if (!user.isActive || !hasAnyRole) {
-        throw new APIError('UNAUTHORIZED', {
-          code: ACCOUNT_NOT_ACTIVE_ERROR_CODE,
-          message: 'Account is not active. Please contact the administrator.',
-        });
+      const roleKeys = user.roles?.map((ur) => ur.role.key) ?? [];
+      const isActive = !!user.isActive;
+
+      // Your existing rule (account must be active and have at least one role).
+      const hasAnyRole = roleKeys.length > 0;
+
+      // Mobile rule: must be DRIVER.
+      const hasDriverRole = roleKeys.includes(REQUIRED_MOBILE_ROLE_KEY);
+
+      const allowed = mobile
+        ? isActive && hasDriverRole
+        : isActive && hasAnyRole;
+
+      if (!allowed) {
+        // IMPORTANT: generic message => no enumeration via "inactive" / "no role" / "not driver".
+        throwGenericAuth();
       }
     }),
   },
