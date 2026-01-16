@@ -107,11 +107,11 @@ export const betterAuthClient = betterAuth({
   trustedOrigins: [process.env.FRONTEND_URL ?? 'http://localhost:3000'],
   plugins: [
     customSession(async ({ user, session }) => {
-      // user.id pochodzi z Better Auth (to ten sam id co w tabeli User)
       const userWithRoles = await prisma.user.findUnique({
         where: { id: user.id },
         select: {
           id: true,
+          avatarUrl: true,
           roles: {
             include: {
               role: true, // Role.key
@@ -123,12 +123,10 @@ export const betterAuthClient = betterAuth({
       const roleKeys = userWithRoles?.roles.map((ur) => ur.role.key) ?? [];
 
       return {
-        // możesz dodać role także jako osobne pole na root (opcjonalne)
-        // roles: roleKeys,
-
         user: {
           ...user,
-          roles: roleKeys, // 👈 finalnie będziesz mieć session.user.roles: string[]
+          roles: roleKeys,
+          avatarUrl: userWithRoles?.avatarUrl ?? null,
         },
         session,
       };
