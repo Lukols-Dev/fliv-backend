@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Delete, Param } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Query } from '@nestjs/common';
 import { Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -24,9 +24,24 @@ export class NotificationsController {
 
   @Get()
   @ApiOperation({ summary: 'List notifications for current user' })
-  async list(@Session() session: UserSession) {
+  async list(
+    @Session() session: UserSession,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNumber = page ? Number(page) : undefined;
+    const limitNumber = limit ? Number(limit) : undefined;
+
     const notifications = await this.listUseCase.execute({
       currentUserId: session.user.id,
+      page:
+        pageNumber && Number.isFinite(pageNumber) && pageNumber > 0
+          ? pageNumber
+          : undefined,
+      limit:
+        limitNumber && Number.isFinite(limitNumber) && limitNumber > 0
+          ? limitNumber
+          : undefined,
     });
 
     return notifications.map((n) => ({

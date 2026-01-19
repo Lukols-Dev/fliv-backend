@@ -51,11 +51,7 @@ export class RegisterDriverUseCase {
 
     // 1. Update basic user data (names, phone, consents)
     await this.userRepository.update(userId, {
-      firstName: input.payload.firstName,
-      lastName: input.payload.lastName,
       phone: input.payload.phone,
-      isAgreedToTerms: input.payload.isAgreedToTerms,
-      isAgreedToPrivacyPolicy: input.payload.isAgreedToPrivacyPolicy,
     });
 
     // 2. Ensure DRIVER role exists and assign it

@@ -4,6 +4,7 @@ import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 import {
   type CreateNotificationInput,
   type NotificationRepositoryPort,
+  type ListNotificationsParams,
 } from '../../application/ports/notification.repository.port';
 import { NotificationMapper } from '../mappers/notification.mapper';
 import { Notification } from '../../domain/entities/notification.entity';
@@ -35,10 +36,26 @@ export class NotificationsPrismaRepository
     });
   }
 
-  async listForUser(userId: UserId): Promise<Notification[]> {
+  async listForUser(
+    userId: UserId,
+    params?: ListNotificationsParams,
+  ): Promise<Notification[]> {
+    const { page, limit } = params ?? {};
+
+    const take =
+      Number.isFinite(limit) && (limit as number) > 0
+        ? (limit as number)
+        : undefined;
+    const skip =
+      Number.isFinite(page) && (page as number) > 0 && take
+        ? ((page as number) - 1) * take
+        : undefined;
+
     const rows: PrismaNotification[] = await this.prisma.notification.findMany({
       where: { userId: userId.value },
       orderBy: { createdAt: 'desc' },
+      skip,
+      take,
     });
 
     return rows.map((row) => NotificationMapper.toDomain(row));

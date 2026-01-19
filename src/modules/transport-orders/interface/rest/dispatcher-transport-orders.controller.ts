@@ -240,7 +240,7 @@ export class DispatcherTransportOrdersController {
       toAddress: order.toAddress,
       cargoWeightKg: order.cargoWeightKg,
       loadingDate: order.loadingDate,
-      loadingTime: (order.loadingTime ?? null) as string | null,
+      loadingTime: order.loadingTime ?? null,
       cargoDescription: order.cargoDescription,
       temperatureSensitive: order.temperatureSensitive,
       notes: order.notes,

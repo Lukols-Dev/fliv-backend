@@ -11,10 +11,18 @@ export interface CreateNotificationInput {
   message: string;
 }
 
+export interface ListNotificationsParams {
+  page?: number;
+  limit?: number;
+}
+
 export interface NotificationRepositoryPort {
   create(input: CreateNotificationInput): Promise<Notification>;
   markAsRead(id: NotificationId): Promise<void>;
-  listForUser(userId: UserId): Promise<Notification[]>;
+  listForUser(
+    userId: UserId,
+    params?: ListNotificationsParams,
+  ): Promise<Notification[]>;
   findById(id: NotificationId): Promise<Notification | null>;
   delete(id: NotificationId): Promise<void>;
   deleteAllForUser(userId: UserId): Promise<void>;

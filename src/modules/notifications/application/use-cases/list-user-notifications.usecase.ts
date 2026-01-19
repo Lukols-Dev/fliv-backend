@@ -8,6 +8,8 @@ import { Notification } from '../../domain/entities/notification.entity';
 
 export interface ListUserNotificationsInput {
   currentUserId: string;
+  page?: number;
+  limit?: number;
 }
 
 @Injectable()
@@ -19,6 +21,9 @@ export class ListUserNotificationsUseCase {
 
   async execute(input: ListUserNotificationsInput): Promise<Notification[]> {
     const userId = new UserId(input.currentUserId);
-    return this.notificationRepository.listForUser(userId);
+    return this.notificationRepository.listForUser(userId, {
+      page: input.page,
+      limit: input.limit,
+    });
   }
 }
