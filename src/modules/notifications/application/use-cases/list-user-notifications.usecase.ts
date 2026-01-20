@@ -5,7 +5,6 @@ import {
   NOTIFICATION_REPOSITORY,
   type NotificationRepositoryPort,
 } from '../ports/notification.repository.port';
-import { Notification } from '../../domain/entities/notification.entity';
 
 export interface ListUserNotificationsInput {
   currentUserId: string;

@@ -95,7 +95,10 @@ export class UpdateTransportOrderUseCase {
       await this.notificationRepository.create({
         userId: actingUserId,
         type: NotificationType.ORDER_STATUS_CHANGED,
-        message: `Zlecenie ${updated.ztNumber} ma nowy status ${updated.status} (${new Date().toISOString()})`,
+        data: {
+          zTNumber: updated.ztNumber,
+          status: updated.status,
+        },
       });
     }
 

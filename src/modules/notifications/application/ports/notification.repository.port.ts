@@ -8,7 +8,7 @@ export const NOTIFICATION_REPOSITORY = Symbol('NOTIFICATION_REPOSITORY');
 export interface CreateNotificationInput {
   userId: UserId;
   type: NotificationType;
-  message: string;
+  data: Record<string, unknown>;
 }
 
 export interface ListNotificationsParams {

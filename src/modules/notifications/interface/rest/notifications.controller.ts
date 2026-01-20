@@ -61,7 +61,7 @@ export class NotificationsController {
         id: n.id.value,
         userId: n.userId,
         type: n.type,
-        message: n.message,
+        data: n.data,
         createdAt: n.createdAt,
         readAt: n.readAt,
       })),
@@ -80,7 +80,7 @@ export class NotificationsController {
       id: notification.id.value,
       userId: notification.userId,
       type: notification.type,
-      message: notification.message,
+      data: notification.data,
       createdAt: notification.createdAt,
       readAt: notification.readAt,
     };

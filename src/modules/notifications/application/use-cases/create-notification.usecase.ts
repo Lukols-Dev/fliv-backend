@@ -6,11 +6,12 @@ import {
 } from '../ports/notification.repository.port';
 import { NotificationType } from '../../domain/value-objects/notification-type.vo';
 import { Notification } from '../../domain/entities/notification.entity';
+import { Prisma } from 'generated/prisma/client';
 
 export interface CreateNotificationInput {
   userId: string;
   type: NotificationType;
-  message: string;
+  data: Prisma.InputJsonObject;
 }
 
 @Injectable()
@@ -24,7 +25,7 @@ export class CreateNotificationUseCase {
     return this.notificationRepository.create({
       userId: new UserId(input.userId),
       type: input.type,
-      message: input.message,
+      data: input.data,
     });
   }
 }

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-// import { Notification as PrismaNotification } from 'generated/prisma/client';
 import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 import {
   type CreateNotificationInput,
@@ -11,6 +10,7 @@ import { NotificationMapper } from '../mappers/notification.mapper';
 import { Notification } from '../../domain/entities/notification.entity';
 import { NotificationId } from '../../domain/value-objects/notification-id.vo';
 import { UserId } from 'src/modules/users/domain/value-objects/user-id.vo';
+import { Prisma } from 'generated/prisma/client';
 
 @Injectable()
 export class NotificationsPrismaRepository
@@ -23,7 +23,7 @@ export class NotificationsPrismaRepository
       data: {
         userId: input.userId.value,
         type: input.type,
-        message: input.message,
+        data: input.data as Prisma.InputJsonValue,
       },
     });
 
@@ -36,31 +36,6 @@ export class NotificationsPrismaRepository
       data: { readAt: new Date() },
     });
   }
-
-  // async listForUser(
-  //   userId: UserId,
-  //   params?: ListNotificationsParams,
-  // ): Promise<Notification[]> {
-  //   const { page, limit } = params ?? {};
-
-  //   const take =
-  //     Number.isFinite(limit) && (limit as number) > 0
-  //       ? (limit as number)
-  //       : undefined;
-  //   const skip =
-  //     Number.isFinite(page) && (page as number) > 0 && take
-  //       ? ((page as number) - 1) * take
-  //       : undefined;
-
-  //   const rows: PrismaNotification[] = await this.prisma.notification.findMany({
-  //     where: { userId: userId.value },
-  //     orderBy: { createdAt: 'desc' },
-  //     skip,
-  //     take,
-  //   });
-
-  //   return rows.map((row) => NotificationMapper.toDomain(row));
-  // }
 
   async listForUser(
     userId: UserId,
@@ -89,10 +64,6 @@ export class NotificationsPrismaRepository
     ]);
 
     const totalPages = Math.max(1, Math.ceil(totalItems / limit));
-
-    // Opcjonalnie (polecam): clamp page, żeby nie zwracać pustych stron po usunięciu danych
-    // Jeśli chcesz clamp, to trzeba drugi query na findMany dla skorygowanej strony.
-    // Wersja minimalna: bez clamp.
 
     return {
       items: rows.map((row) => NotificationMapper.toDomain(row)),

@@ -16,6 +16,7 @@ import {
 } from '../ports/transport-order-event.repository.port';
 import { TransportOrder } from '../../domain/entities/transport-order.entity';
 import { TransportOrderEventType } from '../../domain/value-objects/transport-order-event-type.vo';
+import { TransportOrderStatus } from '../../domain/value-objects/transport-order-status.vo';
 import {
   NOTIFICATION_REPOSITORY,
   type NotificationRepositoryPort,
@@ -56,10 +57,15 @@ export class ReportTransportOrderEventUseCase {
       throw new ForbiddenException('Not allowed to modify this order');
     }
 
-    const historyEntry = await this.eventRepository.record({
+    const previousStatus = order.status;
+    const updatedOrder = await this.orderRepository.update(orderId, {
+      status: TransportOrderStatus.IN_PROGRESS,
+    });
+
+    await this.eventRepository.record({
       orderId,
-      previousStatus: order.status,
-      newStatus: order.status,
+      previousStatus,
+      newStatus: updatedOrder.status,
       type: input.eventType,
       description: `${input.eventType}${
         input.description ? `: ${input.description}` : ''
@@ -70,7 +76,11 @@ export class ReportTransportOrderEventUseCase {
     await this.notificationRepository.create({
       userId: new UserId(order.createdByUserId),
       type: NotificationType.ORDER_EVENT,
-      message: `Zlecenie ${order.ztNumber}: zgłoszono zdarzenie ${input.eventType} (${historyEntry.createdAt.toISOString()})`,
+      data: {
+        zTNumber: order.ztNumber,
+        eventType: input.eventType,
+        status: TransportOrderStatus.IN_PROGRESS,
+      },
     });
 
     const reloaded = await this.orderRepository.findById(orderId);

@@ -84,7 +84,10 @@ export class AssignTransportOrderToDriverUseCase {
       await this.notificationRepository.create({
         userId: new UserId(assignedOrder.createdByUserId),
         type: NotificationType.ORDER_STATUS_CHANGED,
-        message: `Zlecenie ${assignedOrder.ztNumber} ma nowy status ${TransportOrderStatus.ACCEPTED} (${new Date().toISOString()})`,
+        data: {
+          zTNumber: assignedOrder.ztNumber,
+          status: TransportOrderStatus.ACCEPTED,
+        },
       });
 
       const reloaded = await this.orderRepository.findById(assignedOrder.id);

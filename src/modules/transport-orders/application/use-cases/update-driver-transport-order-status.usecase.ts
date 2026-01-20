@@ -101,7 +101,10 @@ export class UpdateDriverTransportOrderStatusUseCase {
     await this.notificationRepository.create({
       userId: new UserId(order.createdByUserId),
       type: NotificationType.ORDER_STATUS_CHANGED,
-      message: `Zlecenie ${order.ztNumber} ma nowy status ${input.status} (${new Date().toISOString()})`,
+      data: {
+        zTNumber: order.ztNumber,
+        status: input.status,
+      },
     });
 
     const reloaded = await this.orderRepository.findById(orderId);
