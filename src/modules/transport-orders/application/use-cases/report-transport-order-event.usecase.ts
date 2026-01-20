@@ -47,6 +47,7 @@ export class ReportTransportOrderEventUseCase {
     const userId = new UserId(input.currentUserId);
 
     const order = await this.orderRepository.findById(orderId);
+
     if (!order) {
       throw new NotFoundException('Transport order not found');
     }
