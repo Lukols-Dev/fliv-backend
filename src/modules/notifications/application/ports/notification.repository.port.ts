@@ -16,13 +16,21 @@ export interface ListNotificationsParams {
   limit?: number;
 }
 
+export type ListNotificationsResult = {
+  items: Notification[];
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+};
+
 export interface NotificationRepositoryPort {
   create(input: CreateNotificationInput): Promise<Notification>;
   markAsRead(id: NotificationId): Promise<void>;
   listForUser(
     userId: UserId,
     params?: ListNotificationsParams,
-  ): Promise<Notification[]>;
+  ): Promise<ListNotificationsResult>;
   findById(id: NotificationId): Promise<Notification | null>;
   delete(id: NotificationId): Promise<void>;
   deleteAllForUser(userId: UserId): Promise<void>;

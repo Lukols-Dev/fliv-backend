@@ -29,29 +29,43 @@ export class NotificationsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const pageNumber = page ? Number(page) : undefined;
-    const limitNumber = limit ? Number(limit) : undefined;
+    const pageNumber = page ? Number(page) : 1;
+    const limitNumber = limit ? Number(limit) : 10;
 
-    const notifications = await this.listUseCase.execute({
+    const requestedPage =
+      Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
+    const safeLimit =
+      Number.isFinite(limitNumber) && limitNumber > 0 ? limitNumber : 10;
+
+    let result = await this.listUseCase.execute({
       currentUserId: session.user.id,
-      page:
-        pageNumber && Number.isFinite(pageNumber) && pageNumber > 0
-          ? pageNumber
-          : undefined,
-      limit:
-        limitNumber && Number.isFinite(limitNumber) && limitNumber > 0
-          ? limitNumber
-          : undefined,
+      page: requestedPage,
+      limit: safeLimit,
     });
 
-    return notifications.map((n) => ({
-      id: n.id.value,
-      userId: n.userId,
-      type: n.type,
-      message: n.message,
-      createdAt: n.createdAt,
-      readAt: n.readAt,
-    }));
+    if (result.totalPages > 0 && result.page > result.totalPages) {
+      result = await this.listUseCase.execute({
+        currentUserId: session.user.id,
+        page: result.totalPages,
+        limit: safeLimit,
+      });
+    }
+
+    return {
+      page: result.page,
+      limit: result.limit,
+      totalItems: result.totalItems,
+      totalPages: result.totalPages,
+      hasNext: result.page < result.totalPages,
+      items: result.items.map((n) => ({
+        id: n.id.value,
+        userId: n.userId,
+        type: n.type,
+        message: n.message,
+        createdAt: n.createdAt,
+        readAt: n.readAt,
+      })),
+    };
   }
 
   @Patch(':id/read')
