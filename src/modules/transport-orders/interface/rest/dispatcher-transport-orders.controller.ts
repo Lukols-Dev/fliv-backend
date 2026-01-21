@@ -180,37 +180,52 @@ export class DispatcherTransportOrdersController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const pageNumber = page ? Number(page) : undefined;
-    const limitNumber = limit ? Number(limit) : undefined;
+    const pageNumber = page ? Number(page) : 1;
+    const limitNumber = limit ? Number(limit) : 8;
 
-    const orders = await this.listDispatcherOrdersUseCase.execute({
+    const requestedPage =
+      Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
+    const safeLimit =
+      Number.isFinite(limitNumber) && limitNumber > 0 ? limitNumber : 8;
+
+    let result = await this.listDispatcherOrdersUseCase.execute({
       currentUserId: session.user.id,
       status,
-      page:
-        pageNumber && Number.isFinite(pageNumber) && pageNumber > 0
-          ? pageNumber
-          : undefined,
-      limit:
-        limitNumber && Number.isFinite(limitNumber) && limitNumber > 0
-          ? limitNumber
-          : undefined,
+      page: requestedPage,
+      limit: safeLimit,
     });
 
-    return orders.map((order) => ({
-      id: order.id.value,
-      ztNumber: order.ztNumber,
-      status: order.status,
-      vehiclePlate: order.vehiclePlate,
-      trailerPlate: order.trailerPlate,
-      driverName:
-        `${order.driverFirstName ?? ''} ${order.driverLastName ?? ''}`.trim(),
-      driverPhone: order.driverPhone,
-      loadingDate: order.loadingDate,
-      fromCountry: order.fromCountry,
-      fromAddress: order.fromAddress,
-      toCountry: order.toCountry,
-      toAddress: order.toAddress,
-    }));
+    if (result.totalPages > 0 && result.page > result.totalPages) {
+      result = await this.listDispatcherOrdersUseCase.execute({
+        currentUserId: session.user.id,
+        status,
+        page: result.totalPages,
+        limit: safeLimit,
+      });
+    }
+
+    return {
+      page: result.page,
+      limit: result.limit,
+      totalItems: result.totalItems,
+      totalPages: result.totalPages,
+      hasNext: result.page < result.totalPages,
+      items: result.items.map((order) => ({
+        id: order.id.value,
+        ztNumber: order.ztNumber,
+        status: order.status,
+        vehiclePlate: order.vehiclePlate,
+        trailerPlate: order.trailerPlate,
+        driverName:
+          `${order.driverFirstName ?? ''} ${order.driverLastName ?? ''}`.trim(),
+        driverPhone: order.driverPhone,
+        loadingDate: order.loadingDate,
+        fromCountry: order.fromCountry,
+        fromAddress: order.fromAddress,
+        toCountry: order.toCountry,
+        toAddress: order.toAddress,
+      })),
+    };
   }
 
   @Get(':id')

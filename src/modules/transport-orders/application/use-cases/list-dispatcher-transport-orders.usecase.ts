@@ -3,8 +3,8 @@ import {
   TRANSPORT_ORDER_REPOSITORY,
   type TransportOrderRepositoryPort,
   type ListTransportOrdersParams,
+  ListTransportOrdersResult,
 } from '../ports/transport-order.repository.port';
-import { TransportOrder } from '../../domain/entities/transport-order.entity';
 import { UserId } from '../../../users/domain/value-objects/user-id.vo';
 
 export interface ListDispatcherOrdersInput extends ListTransportOrdersParams {
@@ -18,9 +18,12 @@ export class ListDispatcherTransportOrdersUseCase {
     private readonly orderRepository: TransportOrderRepositoryPort,
   ) {}
 
-  async execute(input: ListDispatcherOrdersInput): Promise<TransportOrder[]> {
+  async execute(
+    input: ListDispatcherOrdersInput,
+  ): Promise<ListTransportOrdersResult> {
     const dispatcherId = new UserId(input.currentUserId);
-
-    return this.orderRepository.listForDispatcher(dispatcherId, input);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { currentUserId: _ignored, ...params } = input;
+    return this.orderRepository.listForDispatcher(dispatcherId, params);
   }
 }

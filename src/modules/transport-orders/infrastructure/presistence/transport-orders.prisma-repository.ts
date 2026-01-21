@@ -10,6 +10,7 @@ import {
   type UpdateTransportOrderInput,
   type ListTransportOrdersParams,
   type AssignDriverParams,
+  ListTransportOrdersResult,
 } from '../../application/ports/transport-order.repository.port';
 import { TransportOrder } from '../../domain/entities/transport-order.entity';
 import { TransportOrderId } from '../../domain/value-objects/transport-order-id.vo';
@@ -155,9 +156,18 @@ export class TransportOrdersPrismaRepository
   async listForDispatcher(
     dispatcherId: UserId,
     params?: ListTransportOrdersParams,
-  ): Promise<TransportOrder[]> {
-    const { status, page, limit } = params ?? {};
+  ): Promise<ListTransportOrdersResult> {
+    const page =
+      params?.page && Number.isFinite(params.page) && params.page > 0
+        ? params.page
+        : 1;
 
+    const limit =
+      params?.limit && Number.isFinite(params.limit) && params.limit > 0
+        ? params.limit
+        : 10;
+
+    const status = params?.status;
     const parsedStatus =
       status &&
       Object.values(PrismaTransportOrderStatus).includes(
@@ -166,37 +176,38 @@ export class TransportOrdersPrismaRepository
         ? (status as PrismaTransportOrderStatus)
         : undefined;
 
-    const take =
-      Number.isFinite(limit) && (limit as number) > 0
-        ? (limit as number)
-        : undefined;
-    const skip =
-      Number.isFinite(page) && (page as number) > 0 && take
-        ? ((page as number) - 1) * take
-        : undefined;
+    const skip = (page - 1) * limit;
 
     const where: Prisma.TransportOrderWhereInput = {
       createdByUserId: dispatcherId.value,
       ...(parsedStatus ? { status: parsedStatus } : {}),
     };
 
-    const records: TransportOrderWithDocuments[] =
-      await this.prisma.transportOrder.findMany({
+    const [totalItems, records] = await this.prisma.$transaction([
+      this.prisma.transportOrder.count({ where }),
+      this.prisma.transportOrder.findMany({
         where,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: { createdAt: 'desc' },
         skip,
-        take,
+        take: limit,
         include: {
           orderDocuments: true,
-          events: {
-            orderBy: { createdAt: 'asc' },
-          },
+          events: { orderBy: { createdAt: 'asc' } },
         },
-      });
+      }),
+    ]);
 
-    return records.map((record) => TransportOrderMapper.toDomain(record));
+    const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / limit);
+
+    return {
+      items: (records as TransportOrderWithDocuments[]).map((r) =>
+        TransportOrderMapper.toDomain(r),
+      ),
+      page,
+      limit,
+      totalItems,
+      totalPages,
+    };
   }
 
   async listForDriver(

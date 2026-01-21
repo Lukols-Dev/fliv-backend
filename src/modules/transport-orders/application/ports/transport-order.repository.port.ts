@@ -69,6 +69,14 @@ export interface AssignDriverParams {
   driverUserId: UserId;
 }
 
+export type ListTransportOrdersResult = {
+  items: TransportOrder[];
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+};
+
 export interface TransportOrderRepositoryPort {
   findById(id: TransportOrderId): Promise<TransportOrder | null>;
   findByZtNumber(ztNumber: string): Promise<TransportOrder | null>;
@@ -85,7 +93,7 @@ export interface TransportOrderRepositoryPort {
   listForDispatcher(
     dispatcherId: UserId,
     params?: ListTransportOrdersParams,
-  ): Promise<TransportOrder[]>;
+  ): Promise<ListTransportOrdersResult>;
 
   listForDriver(
     driverId: UserId,
