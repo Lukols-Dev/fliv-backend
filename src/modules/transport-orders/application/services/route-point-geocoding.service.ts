@@ -3,6 +3,7 @@ import {
   GEOCODING_SERVICE,
   type GeocodingPort,
 } from '../ports/geocoding.port';
+import { TransportOrderRoutePointBehavior } from '../../domain/value-objects/transport-order-route-point-behavior.vo';
 import { TransportOrderRoutePointSource } from '../../domain/value-objects/transport-order-route-point-source.vo';
 import { TransportOrderRoutePointType } from '../../domain/value-objects/transport-order-route-point-type.vo';
 import type { TransportOrderRoutePointInput } from '../ports/transport-order.repository.port';
@@ -39,6 +40,7 @@ export class RoutePointGeocodingService {
       {
         sequence: 1,
         type: TransportOrderRoutePointType.LOADING,
+        behavior: TransportOrderRoutePointBehavior.STOP,
         source: TransportOrderRoutePointSource.SYSTEM,
         isManual: false,
         label: loading.title,
@@ -49,6 +51,7 @@ export class RoutePointGeocodingService {
       {
         sequence: 2,
         type: TransportOrderRoutePointType.UNLOADING,
+        behavior: TransportOrderRoutePointBehavior.STOP,
         source: TransportOrderRoutePointSource.SYSTEM,
         isManual: false,
         label: unloading.title,

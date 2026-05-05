@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 import {
   Prisma,
+  TransportOrderRoutePointBehavior as PrismaTransportOrderRoutePointBehavior,
   TransportOrderRoutePointSource as PrismaTransportOrderRoutePointSource,
   TransportOrderStatus as PrismaTransportOrderStatus,
 } from 'generated/prisma/client';
@@ -24,6 +25,7 @@ type TransportOrderWithDocuments = Prisma.TransportOrderGetPayload<{
     orderDocuments: true;
     events: { orderBy: { createdAt: 'asc' } };
     routePoints: { orderBy: { sequence: 'asc' } };
+    routePlan: true;
   };
 }>;
 
@@ -46,6 +48,7 @@ export class TransportOrdersPrismaRepository
           orderBy: { createdAt: 'asc' },
         },
         routePoints: routePointsInclude,
+        routePlan: true,
       },
     });
 
@@ -65,6 +68,7 @@ export class TransportOrdersPrismaRepository
           orderBy: { createdAt: 'asc' },
         },
         routePoints: routePointsInclude,
+        routePlan: true,
       },
     });
 
@@ -112,6 +116,7 @@ export class TransportOrdersPrismaRepository
           orderBy: { createdAt: 'asc' },
         },
         routePoints: routePointsInclude,
+        routePlan: true,
       },
     });
 
@@ -162,6 +167,7 @@ export class TransportOrdersPrismaRepository
           orderBy: { createdAt: 'asc' },
         },
         routePoints: routePointsInclude,
+        routePlan: true,
       },
     });
 
@@ -215,6 +221,7 @@ export class TransportOrdersPrismaRepository
           orderDocuments: true,
           events: { orderBy: { createdAt: 'asc' } },
           routePoints: routePointsInclude,
+          routePlan: true,
         },
       }),
     ]);
@@ -274,6 +281,7 @@ export class TransportOrdersPrismaRepository
             orderBy: { createdAt: 'asc' },
           },
           routePoints: routePointsInclude,
+          routePlan: true,
         },
       });
 
@@ -292,6 +300,7 @@ export class TransportOrdersPrismaRepository
           orderBy: { createdAt: 'asc' },
         },
         routePoints: routePointsInclude,
+        routePlan: true,
       },
     });
 
@@ -306,6 +315,7 @@ function mapRoutePointInputs(routePoints: TransportOrderRoutePointInput[]) {
     .map((point) => ({
       sequence: point.sequence,
       type: point.type,
+      behavior: point.behavior ?? PrismaTransportOrderRoutePointBehavior.STOP,
       source: point.source ?? PrismaTransportOrderRoutePointSource.DISPATCHER,
       isManual: point.isManual ?? true,
       label: point.label ?? null,

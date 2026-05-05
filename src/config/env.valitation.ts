@@ -22,6 +22,8 @@ export const envSchema = z.object({
 
   HERE_GEOCODING_API_KEY: z.string().min(1),
   HERE_GEOCODING_BASE_URL: z.string().url().optional(),
+  HERE_ROUTING_API_KEY: z.string().min(1).optional(),
+  HERE_ROUTING_BASE_URL: z.string().url().optional(),
 });
 
 export type EnvVars = z.infer<typeof envSchema>;

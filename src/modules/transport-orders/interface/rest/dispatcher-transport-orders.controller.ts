@@ -25,6 +25,10 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { CreateTransportOrderDto } from '../../application/dto/create-transport-order.dto';
+import {
+  CalculateTransportOrderRouteDto,
+  SaveTransportOrderRouteDto,
+} from '../../application/dto/transport-order-route-editor.dto';
 import { UpdateTransportOrderDto } from '../../application/dto/update-transport-order.dto';
 import { CreateTransportOrderUseCase } from '../../application/use-cases/create-transport-order.usecase';
 import { UpdateTransportOrderUseCase } from '../../application/use-cases/update-transport-order.usecase';
@@ -37,6 +41,7 @@ import { Roles } from 'src/modules/auth/interface/http/roles.decorator';
 import { ROLE_DISPATCHER } from 'src/shared/constants/roles.constants';
 import { UploadDispatcherDocumentToTransportOrderUseCase } from '../../application/use-cases/upload-dispatcher-document-to-transport-order.usecase';
 import { UploadDriverOrderDocumentDto } from '../../application/dto/upload-driver-order-document.dto';
+import { TransportOrderRouteEditorService } from '../../application/services/transport-order-route-editor.service';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -54,6 +59,7 @@ export class DispatcherTransportOrdersController {
     private readonly listDispatcherOrdersUseCase: ListDispatcherTransportOrdersUseCase,
     private readonly getDispatcherOrderUseCase: GetDispatcherTransportOrderUseCase,
     private readonly uploadDispatcherDocumentUseCase: UploadDispatcherDocumentToTransportOrderUseCase,
+    private readonly routeEditorService: TransportOrderRouteEditorService,
   ) {}
 
   @Post()
@@ -172,6 +178,37 @@ export class DispatcherTransportOrdersController {
     return { success: true };
   }
 
+  @Get('route/geocode')
+  @ApiOperation({ summary: 'Geocode route point address (dispatcher)' })
+  async geocodeRoutePoint(@Query('q') query: string) {
+    const results = await this.routeEditorService.geocode(query ?? '');
+    return { items: results };
+  }
+
+  @Get(':id/route')
+  @ApiOperation({ summary: 'Get transport order route editor data' })
+  async getRoute(@Param('id') id: string) {
+    return this.routeEditorService.getRoute(id);
+  }
+
+  @Post(':id/route/calculate')
+  @ApiOperation({ summary: 'Calculate transport order route preview' })
+  async calculateRoute(
+    @Param('id') id: string,
+    @Body() dto: CalculateTransportOrderRouteDto,
+  ) {
+    return this.routeEditorService.calculate(id, dto);
+  }
+
+  @Patch(':id/route')
+  @ApiOperation({ summary: 'Save transport order route from preview' })
+  async saveRoute(
+    @Param('id') id: string,
+    @Body() dto: SaveTransportOrderRouteDto,
+  ) {
+    return this.routeEditorService.save(id, dto);
+  }
+
   @Get()
   @ApiOperation({ summary: 'List transport orders (dispatcher)' })
   async list(
@@ -263,6 +300,7 @@ export class DispatcherTransportOrdersController {
         id: point.id,
         sequence: point.sequence,
         type: point.type,
+        behavior: point.behavior,
         source: point.source,
         isManual: point.isManual,
         label: point.label,
@@ -270,6 +308,17 @@ export class DispatcherTransportOrdersController {
         latitude: point.latitude,
         longitude: point.longitude,
       })),
+      routePlan: order.routePlan
+        ? {
+            routingProfile: order.routePlan.routingProfile,
+            vehicleSpec: order.routePlan.vehicleSpec,
+            distanceMeters: order.routePlan.distanceMeters,
+            durationSeconds: order.routePlan.durationSeconds,
+            polyline: order.routePlan.polyline,
+            calculationHash: order.routePlan.calculationHash,
+            calculatedAt: order.routePlan.calculatedAt,
+          }
+        : null,
       documents: order.documents.map((doc) => ({
         id: doc.id.value,
         title: doc.title ?? null,

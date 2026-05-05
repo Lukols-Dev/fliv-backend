@@ -8,7 +8,11 @@ import {
 
 type HereGeocodeResponse = {
   items?: Array<{
+    id?: string;
     title?: string;
+    address?: {
+      label?: string;
+    };
     position?: {
       lat?: number;
       lng?: number;
@@ -20,16 +24,44 @@ type HereGeocodeResponse = {
 export class HereGeocodingService implements GeocodingPort {
   constructor(private readonly configService: ConfigService) {}
 
+  async searchAddress(query: string): Promise<GeocodeAddressResult[]> {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      throw new BadRequestException('Address for geocoding is empty');
+    }
+
+    const data = await this.fetchGeocode(trimmedQuery, 5);
+
+    const results: GeocodeAddressResult[] = [];
+
+    for (const item of data.items ?? []) {
+        const latitude = item.position?.lat;
+        const longitude = item.position?.lng;
+
+        if (
+          typeof latitude !== 'number' ||
+          typeof longitude !== 'number' ||
+          !Number.isFinite(latitude) ||
+          !Number.isFinite(longitude)
+        ) {
+          continue;
+        }
+
+        results.push({
+          latitude,
+          longitude,
+          title: item.title?.trim() || trimmedQuery,
+          address: item.address?.label ?? item.title ?? null,
+          hereId: item.id ?? null,
+        });
+    }
+
+    return results;
+  }
+
   async geocodeAddress(
     input: GeocodeAddressInput,
   ): Promise<GeocodeAddressResult> {
-    const apiKey = this.configService.get<string>('here.geocodingApiKey');
-    const baseUrl = this.configService.get<string>('here.geocodingBaseUrl');
-
-    if (!apiKey || !baseUrl) {
-      throw new BadRequestException('HERE geocoding is not configured');
-    }
-
     const query = [input.address, input.country]
       .map((part) => part?.trim())
       .filter(Boolean)
@@ -39,9 +71,30 @@ export class HereGeocodingService implements GeocodingPort {
       throw new BadRequestException('Address for geocoding is empty');
     }
 
+    const results = await this.searchAddress(query);
+    const first = results[0];
+
+    if (!first) {
+      throw new BadRequestException(`Could not geocode address: ${query}`);
+    }
+
+    return first;
+  }
+
+  private async fetchGeocode(
+    query: string,
+    limit: number,
+  ): Promise<HereGeocodeResponse> {
+    const apiKey = this.configService.get<string>('here.geocodingApiKey');
+    const baseUrl = this.configService.get<string>('here.geocodingBaseUrl');
+
+    if (!apiKey || !baseUrl) {
+      throw new BadRequestException('HERE geocoding is not configured');
+    }
+
     const url = new URL(baseUrl);
     url.searchParams.set('q', query);
-    url.searchParams.set('limit', '1');
+    url.searchParams.set('limit', String(limit));
     url.searchParams.set('apiKey', apiKey);
 
     let response: Response;
@@ -55,24 +108,6 @@ export class HereGeocodingService implements GeocodingPort {
       throw new BadRequestException(`Could not geocode address: ${query}`);
     }
 
-    const data = (await response.json()) as HereGeocodeResponse;
-    const first = data.items?.[0];
-    const latitude = first?.position?.lat;
-    const longitude = first?.position?.lng;
-
-    if (
-      typeof latitude !== 'number' ||
-      typeof longitude !== 'number' ||
-      !Number.isFinite(latitude) ||
-      !Number.isFinite(longitude)
-    ) {
-      throw new BadRequestException(`Could not geocode address: ${query}`);
-    }
-
-    return {
-      latitude,
-      longitude,
-      title: first?.title?.trim() || query,
-    };
+    return (await response.json()) as HereGeocodeResponse;
   }
 }

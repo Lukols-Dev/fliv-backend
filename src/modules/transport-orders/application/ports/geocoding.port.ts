@@ -9,8 +9,11 @@ export interface GeocodeAddressResult {
   latitude: number;
   longitude: number;
   title: string;
+  address?: string | null;
+  hereId?: string | null;
 }
 
 export interface GeocodingPort {
   geocodeAddress(input: GeocodeAddressInput): Promise<GeocodeAddressResult>;
+  searchAddress(query: string): Promise<GeocodeAddressResult[]>;
 }

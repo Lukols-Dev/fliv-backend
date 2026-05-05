@@ -354,6 +354,7 @@ export class DriverTransportOrdersController {
         id: point.id,
         sequence: point.sequence,
         type: point.type,
+        behavior: point.behavior,
         source: point.source,
         isManual: point.isManual,
         label: point.label,
@@ -361,6 +362,17 @@ export class DriverTransportOrdersController {
         latitude: point.latitude,
         longitude: point.longitude,
       })),
+      routePlan: order.routePlan
+        ? {
+            routingProfile: order.routePlan.routingProfile,
+            vehicleSpec: order.routePlan.vehicleSpec,
+            distanceMeters: order.routePlan.distanceMeters,
+            durationSeconds: order.routePlan.durationSeconds,
+            polyline: order.routePlan.polyline,
+            calculationHash: order.routePlan.calculationHash,
+            calculatedAt: order.routePlan.calculatedAt,
+          }
+        : null,
       documents: order.documents.map((doc) => ({
         id: doc.id.value,
         title: doc.title ?? null,

@@ -9,6 +9,7 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { TransportOrderRoutePointBehavior } from '../../domain/value-objects/transport-order-route-point-behavior.vo';
 import { TransportOrderRoutePointSource } from '../../domain/value-objects/transport-order-route-point-source.vo';
 import { TransportOrderRoutePointType } from '../../domain/value-objects/transport-order-route-point-type.vo';
 
@@ -20,6 +21,10 @@ export class TransportOrderRoutePointDto {
 
   @IsEnum(TransportOrderRoutePointType)
   type!: TransportOrderRoutePointType;
+
+  @IsOptional()
+  @IsEnum(TransportOrderRoutePointBehavior)
+  behavior?: TransportOrderRoutePointBehavior;
 
   @IsOptional()
   @IsEnum(TransportOrderRoutePointSource)

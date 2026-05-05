@@ -12,6 +12,7 @@ import { OrderDocumentsPrismaRepository } from './infrastructure/presistence/ord
 import { TransportOrderEventPrismaRepository } from './infrastructure/presistence/transport-order-event.prisma-repository';
 import { HereGeocodingService } from './infrastructure/geocoding/here-geocoding.service';
 import { RoutePointGeocodingService } from './application/services/route-point-geocoding.service';
+import { TransportOrderRouteEditorService } from './application/services/transport-order-route-editor.service';
 
 import { CreateTransportOrderUseCase } from './application/use-cases/create-transport-order.usecase';
 import { UpdateTransportOrderUseCase } from './application/use-cases/update-transport-order.usecase';
@@ -51,6 +52,7 @@ import { DriverTransportOrdersController } from './interface/rest/driver-transpo
       useClass: HereGeocodingService,
     },
     RoutePointGeocodingService,
+    TransportOrderRouteEditorService,
     CreateTransportOrderUseCase,
     UpdateTransportOrderUseCase,
     DeleteTransportOrderUseCase,

@@ -171,7 +171,15 @@ enum TransportOrderEventType {
 enum TransportOrderRoutePointType {
   LOADING
   UNLOADING
-  VIA
+  FUEL
+  PARKING
+  SERVICE
+  OTHER
+}
+
+enum TransportOrderRoutePointBehavior {
+  STOP
+  PASS_THROUGH
 }
 
 enum TransportOrderRoutePointSource {
@@ -227,6 +235,7 @@ model TransportOrder {
   orderDocuments OrderDocument[]
   events         TransportOrderEvent[]
   routePoints    TransportOrderRoutePoint[]
+  routePlan      TransportOrderRoutePlan?
 
   @@index([ztNumber])
   @@index([createdByUserId])
@@ -239,6 +248,7 @@ model TransportOrderRoutePoint {
   transportOrder   TransportOrder               @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
   sequence         Int
   type             TransportOrderRoutePointType
+  behavior         TransportOrderRoutePointBehavior @default(STOP)
   source           TransportOrderRoutePointSource @default(DISPATCHER)
   isManual         Boolean                      @default(true)
   label            String?
@@ -251,6 +261,39 @@ model TransportOrderRoutePoint {
 
   @@unique([transportOrderId, sequence])
   @@index([transportOrderId])
+}
+
+model TransportOrderRoutePlan {
+  id               String         @id @default(cuid())
+  transportOrderId String         @unique
+  transportOrder   TransportOrder @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+
+  routingProfile   Json
+  vehicleSpec      Json?
+
+  distanceMeters   Int
+  durationSeconds  Int
+  polyline         String
+  calculationHash  String
+  calculatedAt     DateTime
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model TransportOrderRoutePreview {
+  id               String   @id @default(cuid())
+  transportOrderId String
+  calculationHash  String
+
+  calculationInput Json
+  calculatedRoute  Json
+
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+
+  @@index([transportOrderId])
+  @@index([expiresAt])
 }
 
 model TransportOrderEvent {

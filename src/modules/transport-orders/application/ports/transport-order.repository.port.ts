@@ -1,6 +1,7 @@
 import { UserId } from 'src/modules/users/domain/value-objects/user-id.vo';
 import type { TransportOrder } from '../../domain/entities/transport-order.entity';
 import { TransportOrderId } from '../../domain/value-objects/transport-order-id.vo';
+import { TransportOrderRoutePointBehavior } from '../../domain/value-objects/transport-order-route-point-behavior.vo';
 import { TransportOrderRoutePointSource } from '../../domain/value-objects/transport-order-route-point-source.vo';
 import { TransportOrderRoutePointType } from '../../domain/value-objects/transport-order-route-point-type.vo';
 import { TransportOrderStatus } from '../../domain/value-objects/transport-order-status.vo';
@@ -65,6 +66,7 @@ export interface UpdateTransportOrderInput {
 export interface TransportOrderRoutePointInput {
   sequence: number;
   type: TransportOrderRoutePointType;
+  behavior?: TransportOrderRoutePointBehavior;
   source?: TransportOrderRoutePointSource;
   isManual?: boolean;
   label?: string | null;

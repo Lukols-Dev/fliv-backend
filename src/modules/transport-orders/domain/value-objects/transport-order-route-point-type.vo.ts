@@ -1,5 +1,8 @@
 export enum TransportOrderRoutePointType {
   LOADING = 'LOADING',
   UNLOADING = 'UNLOADING',
-  VIA = 'VIA',
+  FUEL = 'FUEL',
+  PARKING = 'PARKING',
+  SERVICE = 'SERVICE',
+  OTHER = 'OTHER',
 }
