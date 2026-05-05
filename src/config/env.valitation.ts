@@ -19,6 +19,9 @@ export const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().min(1),
   CLOUDINARY_API_SECRET: z.string().min(1),
   CLOUDINARY_DEFAULT_FOLDER: z.string().min(1).default('fliv'),
+
+  HERE_GEOCODING_API_KEY: z.string().min(1),
+  HERE_GEOCODING_BASE_URL: z.string().url().optional(),
 });
 
 export type EnvVars = z.infer<typeof envSchema>;

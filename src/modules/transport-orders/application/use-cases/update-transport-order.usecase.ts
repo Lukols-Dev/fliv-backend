@@ -18,6 +18,7 @@ import { UserId } from 'src/modules/users/domain/value-objects/user-id.vo';
 import { TransportOrderEventType } from '../../domain/value-objects/transport-order-event-type.vo';
 import { NotificationType } from 'src/modules/notifications/domain/value-objects/notification-type.vo';
 import { TransportOrderStatus } from '../../domain/value-objects/transport-order-status.vo';
+import { RoutePointGeocodingService } from '../services/route-point-geocoding.service';
 
 export interface UpdateTransportOrderInput {
   orderId: string;
@@ -33,6 +34,7 @@ export class UpdateTransportOrderUseCase {
     private readonly eventRepository: TransportOrderEventRepositoryPort,
     @Inject(NOTIFICATION_REPOSITORY)
     private readonly notificationRepository: NotificationRepositoryPort,
+    private readonly routePointGeocodingService: RoutePointGeocodingService,
   ) {}
 
   async execute(input: UpdateTransportOrderInput): Promise<TransportOrder> {
@@ -49,6 +51,39 @@ export class UpdateTransportOrderUseCase {
         : undefined;
 
     const previousStatus = existing.status;
+    const nextFromCountry = input.payload.fromCountry ?? existing.fromCountry;
+    const nextFromAddress =
+      input.payload.fromAddress === undefined
+        ? existing.fromAddress
+        : input.payload.fromAddress;
+    const nextToCountry = input.payload.toCountry ?? existing.toCountry;
+    const nextToAddress =
+      input.payload.toAddress === undefined
+        ? existing.toAddress
+        : input.payload.toAddress;
+    const addressChanged =
+      (input.payload.fromCountry !== undefined &&
+        input.payload.fromCountry !== existing.fromCountry) ||
+      (input.payload.fromAddress !== undefined &&
+        input.payload.fromAddress !== existing.fromAddress) ||
+      (input.payload.toCountry !== undefined &&
+        input.payload.toCountry !== existing.toCountry) ||
+      (input.payload.toAddress !== undefined &&
+        input.payload.toAddress !== existing.toAddress);
+    const hasManualRoutePoints = existing.routePoints.some(
+      (point) => point.isManual,
+    );
+    const routePoints =
+      input.payload.routePoints !== undefined
+        ? input.payload.routePoints
+        : addressChanged && !hasManualRoutePoints
+          ? await this.routePointGeocodingService.buildBaseRoutePoints({
+              fromCountry: nextFromCountry,
+              fromAddress: nextFromAddress,
+              toCountry: nextToCountry,
+              toAddress: nextToAddress,
+            })
+          : undefined;
 
     const updated = await this.transportOrderRepository.update(orderId, {
       ztNumber: input.payload.ztNumber,
@@ -74,6 +109,7 @@ export class UpdateTransportOrderUseCase {
       temperatureSensitive: input.payload.temperatureSensitive,
       notes: input.payload.notes,
       status: input.payload.status,
+      routePoints,
     });
 
     if (input.payload.status && input.payload.status !== previousStatus) {

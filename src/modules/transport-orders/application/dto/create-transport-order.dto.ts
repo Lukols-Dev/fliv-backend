@@ -1,12 +1,17 @@
 import {
   IsBoolean,
+  IsArray,
+  ArrayUnique,
   IsDateString,
   IsEmail,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { TransportOrderRoutePointDto } from './transport-order-route-point.dto';
 
 export class CreateTransportOrderDto {
   @IsString()
@@ -99,4 +104,11 @@ export class CreateTransportOrderDto {
   @IsOptional()
   @IsString()
   notes?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique((point: TransportOrderRoutePointDto) => point.sequence)
+  @ValidateNested({ each: true })
+  @Type(() => TransportOrderRoutePointDto)
+  routePoints?: TransportOrderRoutePointDto[];
 }

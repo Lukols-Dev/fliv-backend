@@ -5,6 +5,7 @@ import {
   type TransportOrderRepositoryPort,
 } from '../ports/transport-order.repository.port';
 import { TransportOrder } from '../../domain/entities/transport-order.entity';
+import { RoutePointGeocodingService } from '../services/route-point-geocoding.service';
 
 export interface CreateTransportOrderInput {
   currentUserId: string;
@@ -16,10 +17,19 @@ export class CreateTransportOrderUseCase {
   constructor(
     @Inject(TRANSPORT_ORDER_REPOSITORY)
     private readonly transportOrderRepository: TransportOrderRepositoryPort,
+    private readonly routePointGeocodingService: RoutePointGeocodingService,
   ) {}
 
   async execute(input: CreateTransportOrderInput): Promise<TransportOrder> {
     const { payload, currentUserId } = input;
+    const routePoints = payload.routePoints?.length
+      ? payload.routePoints
+      : await this.routePointGeocodingService.buildBaseRoutePoints({
+          fromCountry: payload.fromCountry,
+          fromAddress: payload.fromAddress ?? null,
+          toCountry: payload.toCountry,
+          toAddress: payload.toAddress ?? null,
+        });
 
     const created = await this.transportOrderRepository.create({
       ztNumber: payload.ztNumber,
@@ -46,6 +56,7 @@ export class CreateTransportOrderUseCase {
       temperatureSensitive: payload.temperatureSensitive,
       notes: payload.notes ?? null,
       createdByUserId: currentUserId,
+      routePoints,
     });
 
     return created;

@@ -4,6 +4,9 @@ import type {
   TransportOrderEvent as PrismaTransportOrderEvent,
   TransportOrderStatus as PrismaTransportOrderStatus,
   TransportOrderEventType as PrismaTransportOrderEventType,
+  TransportOrderRoutePoint as PrismaTransportOrderRoutePoint,
+  TransportOrderRoutePointSource as PrismaTransportOrderRoutePointSource,
+  TransportOrderRoutePointType as PrismaTransportOrderRoutePointType,
 } from 'generated/prisma/client';
 import { TransportOrder } from '../../domain/entities/transport-order.entity';
 import { TransportOrderId } from '../../domain/value-objects/transport-order-id.vo';
@@ -13,10 +16,14 @@ import { TransportOrderDocumentId } from '../../domain/value-objects/transport-o
 import { TransportOrderEvent } from '../../domain/entities/transport-order-event.entity';
 import { TransportOrderEventId } from '../../domain/value-objects/transport-order-event-id.vo';
 import { TransportOrderEventType } from '../../domain/value-objects/transport-order-event-type.vo';
+import { TransportOrderRoutePoint } from '../../domain/entities/transport-order-route-point.entity';
+import { TransportOrderRoutePointSource } from '../../domain/value-objects/transport-order-route-point-source.vo';
+import { TransportOrderRoutePointType } from '../../domain/value-objects/transport-order-route-point-type.vo';
 
 type TransportOrderWithDocuments = PrismaTransportOrder & {
   orderDocuments: PrismaTransportOrderDocument[];
   events?: PrismaTransportOrderEvent[];
+  routePoints?: PrismaTransportOrderRoutePoint[];
 };
 
 export class TransportOrderMapper {
@@ -70,6 +77,7 @@ export class TransportOrderMapper {
       record.updatedAt,
       documents,
       mapEvents(record.events),
+      mapRoutePoints(record.routePoints),
     );
   }
 }
@@ -99,6 +107,25 @@ function mapEvents(
         event.description ?? null,
         event.createdByUserId,
         event.createdAt,
+      ),
+  );
+}
+
+function mapRoutePoints(
+  routePoints: PrismaTransportOrderRoutePoint[] | undefined,
+): TransportOrderRoutePoint[] {
+  return (routePoints ?? []).map(
+    (point) =>
+      new TransportOrderRoutePoint(
+        point.id,
+        point.sequence,
+        mapPrismaRoutePointType(point.type),
+        mapPrismaRoutePointSource(point.source),
+        point.isManual,
+        point.label ?? null,
+        point.address ?? null,
+        point.latitude,
+        point.longitude,
       ),
   );
 }
@@ -165,5 +192,39 @@ function mapPrismaEventType(
       throw new Error(
         `Unsupported transport order event type: ${type as string}`,
       );
+  }
+}
+
+function mapPrismaRoutePointType(
+  type: PrismaTransportOrderRoutePointType,
+): TransportOrderRoutePointType {
+  switch (type) {
+    case 'LOADING':
+      return TransportOrderRoutePointType.LOADING;
+    case 'UNLOADING':
+      return TransportOrderRoutePointType.UNLOADING;
+    case 'VIA':
+      return TransportOrderRoutePointType.VIA;
+    default: {
+      const _exhaustive: never = type;
+      return _exhaustive;
+    }
+  }
+}
+
+function mapPrismaRoutePointSource(
+  source: PrismaTransportOrderRoutePointSource,
+): TransportOrderRoutePointSource {
+  switch (source) {
+    case 'DISPATCHER':
+      return TransportOrderRoutePointSource.DISPATCHER;
+    case 'SYSTEM':
+      return TransportOrderRoutePointSource.SYSTEM;
+    case 'HERE':
+      return TransportOrderRoutePointSource.HERE;
+    default: {
+      const _exhaustive: never = source;
+      return _exhaustive;
+    }
   }
 }

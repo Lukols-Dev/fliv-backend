@@ -259,6 +259,17 @@ export class DispatcherTransportOrdersController {
       cargoDescription: order.cargoDescription,
       temperatureSensitive: order.temperatureSensitive,
       notes: order.notes,
+      routePoints: order.routePoints.map((point) => ({
+        id: point.id,
+        sequence: point.sequence,
+        type: point.type,
+        source: point.source,
+        isManual: point.isManual,
+        label: point.label,
+        address: point.address,
+        latitude: point.latitude,
+        longitude: point.longitude,
+      })),
       documents: order.documents.map((doc) => ({
         id: doc.id.value,
         title: doc.title ?? null,

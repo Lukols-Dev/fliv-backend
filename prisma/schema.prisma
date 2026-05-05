@@ -168,6 +168,18 @@ enum TransportOrderEventType {
   ORDER_COMPLETED
 }
 
+enum TransportOrderRoutePointType {
+  LOADING
+  UNLOADING
+  VIA
+}
+
+enum TransportOrderRoutePointSource {
+  DISPATCHER
+  SYSTEM
+  HERE
+}
+
 enum NotificationType {
   ORDER_STATUS_CHANGED
   ORDER_EVENT
@@ -214,10 +226,31 @@ model TransportOrder {
 
   orderDocuments OrderDocument[]
   events         TransportOrderEvent[]
+  routePoints    TransportOrderRoutePoint[]
 
   @@index([ztNumber])
   @@index([createdByUserId])
   @@index([assignedDriverUserId])
+}
+
+model TransportOrderRoutePoint {
+  id               String                       @id @default(cuid())
+  transportOrderId String
+  transportOrder   TransportOrder               @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+  sequence         Int
+  type             TransportOrderRoutePointType
+  source           TransportOrderRoutePointSource @default(DISPATCHER)
+  isManual         Boolean                      @default(true)
+  label            String?
+  address          String?
+  latitude         Float
+  longitude        Float
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([transportOrderId, sequence])
+  @@index([transportOrderId])
 }
 
 model TransportOrderEvent {
