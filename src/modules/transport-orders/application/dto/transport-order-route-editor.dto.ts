@@ -73,11 +73,11 @@ export class RoutePointDraftDto {
 }
 
 export class RoutingProfileDto {
-  @IsIn(['truck'])
-  transportMode!: 'truck';
+  @IsIn(['car', 'truck'])
+  transportMode!: 'car' | 'truck';
 
-  @IsIn(['fast'])
-  routingMode!: 'fast';
+  @IsIn(['fast', 'short'])
+  routingMode!: 'fast' | 'short';
 
   @IsIn(['default', 'disabled'])
   trafficMode!: 'default' | 'disabled';

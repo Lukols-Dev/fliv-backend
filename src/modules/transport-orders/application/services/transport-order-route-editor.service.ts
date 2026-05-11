@@ -20,7 +20,7 @@ import {
   GEOCODING_SERVICE,
   type GeocodeAddressResult,
   type GeocodingPort,
-} from '../ports/geocoding.port';
+} from 'src/modules/geocoding/application/ports/geocoding.port';
 import {
   CalculateTransportOrderRouteDto,
   RoutePointDraftDto,
@@ -147,7 +147,10 @@ export class TransportOrderRouteEditorService {
     }
 
     const routingProfile = normalizeRoutingProfile(payload.routingProfile);
-    const vehicleSpec = normalizeVehicleSpec(payload.vehicleSpec ?? null);
+    const vehicleSpec = normalizeVehicleSpecForTransport(
+      routingProfile,
+      payload.vehicleSpec ?? null,
+    );
     const calculationInput = buildCalculationInput(
       normalizedPoints,
       routingProfile,
@@ -159,9 +162,7 @@ export class TransportOrderRouteEditorService {
       routingProfile,
       vehicleSpec,
     );
-    const expiresAt = new Date(
-      Date.now() + PREVIEW_TTL_MINUTES * 60 * 1000,
-    );
+    const expiresAt = new Date(Date.now() + PREVIEW_TTL_MINUTES * 60 * 1000);
 
     const preview = await this.prisma.transportOrderRoutePreview.create({
       data: {
@@ -187,7 +188,10 @@ export class TransportOrderRouteEditorService {
     }
 
     const routingProfile = normalizeRoutingProfile(payload.routingProfile);
-    const vehicleSpec = normalizeVehicleSpec(payload.vehicleSpec ?? null);
+    const vehicleSpec = normalizeVehicleSpecForTransport(
+      routingProfile,
+      payload.vehicleSpec ?? null,
+    );
     const calculationInput = buildCalculationInput(
       normalizedPoints,
       routingProfile,
@@ -326,7 +330,9 @@ export class TransportOrderRouteEditorService {
       url.searchParams.set('avoid[features]', avoidFeatures.join(','));
     }
 
-    applyVehicleSpec(url, vehicleSpec);
+    if (routingProfile.transportMode === 'truck') {
+      applyVehicleSpec(url, vehicleSpec);
+    }
 
     let response: Response;
     try {
@@ -394,13 +400,22 @@ function normalizeRoutingProfile(
   routingProfile: RoutingProfileDto | undefined,
 ): RoutingProfileDto {
   return {
-    transportMode: 'truck',
-    routingMode: 'fast',
+    transportMode: routingProfile?.transportMode ?? 'truck',
+    routingMode: routingProfile?.routingMode ?? 'fast',
     trafficMode: routingProfile?.trafficMode ?? 'default',
     avoidTolls: routingProfile?.avoidTolls ?? false,
     avoidFerries: routingProfile?.avoidFerries ?? false,
     avoidMotorways: routingProfile?.avoidMotorways ?? false,
   };
+}
+
+function normalizeVehicleSpecForTransport(
+  routingProfile: RoutingProfileDto,
+  vehicleSpec: VehicleSpecDto | null | undefined,
+): VehicleSpecDto | null {
+  return routingProfile.transportMode === 'truck'
+    ? normalizeVehicleSpec(vehicleSpec)
+    : null;
 }
 
 function normalizeVehicleSpec(

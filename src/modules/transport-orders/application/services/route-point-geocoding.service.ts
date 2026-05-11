@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   GEOCODING_SERVICE,
   type GeocodingPort,
-} from '../ports/geocoding.port';
+} from 'src/modules/geocoding/application/ports/geocoding.port';
 import { TransportOrderRoutePointBehavior } from '../../domain/value-objects/transport-order-route-point-behavior.vo';
 import { TransportOrderRoutePointSource } from '../../domain/value-objects/transport-order-route-point-source.vo';
 import { TransportOrderRoutePointType } from '../../domain/value-objects/transport-order-route-point-type.vo';

@@ -188,9 +188,33 @@ enum TransportOrderRoutePointSource {
   HERE
 }
 
+enum PartnerPoiType {
+  FUEL
+  PARKING
+  SERVICE
+  OTHER
+}
+
 enum NotificationType {
   ORDER_STATUS_CHANGED
   ORDER_EVENT
+}
+
+model PartnerPoi {
+  id        String         @id @default(cuid())
+  name      String?
+  type      PartnerPoiType @default(FUEL)
+
+  address   String
+  latitude  Float
+  longitude Float
+
+  isActive  Boolean        @default(true)
+
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([isActive, latitude, longitude])
 }
 
 model TransportOrder {

@@ -2,15 +2,14 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from 'src/infrastructure/prisma/prisma.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { DocumentsModule } from '../documents/documents.module';
+import { GeocodingModule } from '../geocoding/geocoding.module';
 import { TRANSPORT_ORDER_REPOSITORY } from './application/ports/transport-order.repository.port';
 import { ORDER_DOCUMENT_REPOSITORY } from './application/ports/order-document.repository.port';
 import { TRANSPORT_ORDER_EVENT_REPOSITORY } from './application/ports/transport-order-event.repository.port';
-import { GEOCODING_SERVICE } from './application/ports/geocoding.port';
 
 import { TransportOrdersPrismaRepository } from './infrastructure/presistence/transport-orders.prisma-repository';
 import { OrderDocumentsPrismaRepository } from './infrastructure/presistence/order-documents.prisma-repository';
 import { TransportOrderEventPrismaRepository } from './infrastructure/presistence/transport-order-event.prisma-repository';
-import { HereGeocodingService } from './infrastructure/geocoding/here-geocoding.service';
 import { RoutePointGeocodingService } from './application/services/route-point-geocoding.service';
 import { TransportOrderRouteEditorService } from './application/services/transport-order-route-editor.service';
 
@@ -33,7 +32,12 @@ import { DispatcherTransportOrdersController } from './interface/rest/dispatcher
 import { DriverTransportOrdersController } from './interface/rest/driver-transport-orders.controller';
 
 @Module({
-  imports: [PrismaModule, NotificationsModule, DocumentsModule],
+  imports: [
+    PrismaModule,
+    NotificationsModule,
+    DocumentsModule,
+    GeocodingModule,
+  ],
   providers: [
     {
       provide: TRANSPORT_ORDER_REPOSITORY,
@@ -46,10 +50,6 @@ import { DriverTransportOrdersController } from './interface/rest/driver-transpo
     {
       provide: TRANSPORT_ORDER_EVENT_REPOSITORY,
       useClass: TransportOrderEventPrismaRepository,
-    },
-    {
-      provide: GEOCODING_SERVICE,
-      useClass: HereGeocodingService,
     },
     RoutePointGeocodingService,
     TransportOrderRouteEditorService,

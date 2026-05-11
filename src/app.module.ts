@@ -14,6 +14,7 @@ import { TransportOrdersModule } from './modules/transport-orders/transport-orde
 import { DocumentsModule } from './modules/documents/documents.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { PartnerPoisModule } from './modules/partner-pois/partner-pois.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AuthModule } from './modules/auth/auth.module';
     AuthModule,
     UsersModule,
     TransportOrdersModule,
+    PartnerPoisModule,
     DocumentsModule,
     NotificationsModule,
   ],

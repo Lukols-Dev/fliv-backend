@@ -4,7 +4,7 @@ import {
   GeocodeAddressInput,
   GeocodeAddressResult,
   GeocodingPort,
-} from '../../application/ports/geocoding.port';
+} from '../application/ports/geocoding.port';
 
 type HereGeocodeResponse = {
   items?: Array<{
@@ -35,25 +35,25 @@ export class HereGeocodingService implements GeocodingPort {
     const results: GeocodeAddressResult[] = [];
 
     for (const item of data.items ?? []) {
-        const latitude = item.position?.lat;
-        const longitude = item.position?.lng;
+      const latitude = item.position?.lat;
+      const longitude = item.position?.lng;
 
-        if (
-          typeof latitude !== 'number' ||
-          typeof longitude !== 'number' ||
-          !Number.isFinite(latitude) ||
-          !Number.isFinite(longitude)
-        ) {
-          continue;
-        }
+      if (
+        typeof latitude !== 'number' ||
+        typeof longitude !== 'number' ||
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+      ) {
+        continue;
+      }
 
-        results.push({
-          latitude,
-          longitude,
-          title: item.title?.trim() || trimmedQuery,
-          address: item.address?.label ?? item.title ?? null,
-          hereId: item.id ?? null,
-        });
+      results.push({
+        latitude,
+        longitude,
+        title: item.title?.trim() || trimmedQuery,
+        address: item.address?.label ?? item.title ?? null,
+        hereId: item.id ?? null,
+      });
     }
 
     return results;
