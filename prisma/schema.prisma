@@ -342,6 +342,10 @@ model DriverLiveLocation {
   speedMps         Float?
   bearingDegrees   Float?
 
+  remainingDistanceMeters  Int?
+  traveledDistanceMeters   Int?
+  remainingDurationSeconds Int?
+
   recordedAt       DateTime
   source           DriverLocationSource @default(HERE_SDK)
 

@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsISO8601,
+  IsInt,
   IsNumber,
   IsOptional,
   Max,
@@ -40,6 +41,24 @@ export class UpsertDriverLiveLocationDto {
   @Min(0)
   @Max(360)
   bearingDegrees?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  remainingDistanceMeters?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  traveledDistanceMeters?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  remainingDurationSeconds?: number;
 
   @IsISO8601()
   recordedAt!: string;

@@ -31,6 +31,9 @@ export type DriverLiveLocationResponse = {
   accuracyMeters: number | null;
   speedMetersPerSecond: number | null;
   bearingDegrees: number | null;
+  remainingDistanceMeters: number | null;
+  traveledDistanceMeters: number | null;
+  remainingDurationSeconds: number | null;
   recordedAt: Date;
   updatedAt: Date;
   source: DriverLocationSource;
@@ -92,6 +95,9 @@ export class DriverLiveLocationService {
         accuracyMeters: input.payload.accuracyMeters ?? null,
         speedMps: input.payload.speedMetersPerSecond ?? null,
         bearingDegrees: input.payload.bearingDegrees ?? null,
+        remainingDistanceMeters: input.payload.remainingDistanceMeters ?? null,
+        traveledDistanceMeters: input.payload.traveledDistanceMeters ?? null,
+        remainingDurationSeconds: input.payload.remainingDurationSeconds ?? null,
         recordedAt,
         source: DriverLocationSource.HERE_SDK,
       },
@@ -101,6 +107,9 @@ export class DriverLiveLocationService {
         accuracyMeters: input.payload.accuracyMeters ?? null,
         speedMps: input.payload.speedMetersPerSecond ?? null,
         bearingDegrees: input.payload.bearingDegrees ?? null,
+        remainingDistanceMeters: input.payload.remainingDistanceMeters ?? null,
+        traveledDistanceMeters: input.payload.traveledDistanceMeters ?? null,
+        remainingDurationSeconds: input.payload.remainingDurationSeconds ?? null,
         recordedAt,
         source: DriverLocationSource.HERE_SDK,
       },
@@ -149,6 +158,9 @@ export class DriverLiveLocationService {
       accuracyMeters: location.accuracyMeters,
       speedMetersPerSecond: location.speedMps,
       bearingDegrees: location.bearingDegrees,
+      remainingDistanceMeters: location.remainingDistanceMeters,
+      traveledDistanceMeters: location.traveledDistanceMeters,
+      remainingDurationSeconds: location.remainingDurationSeconds,
       recordedAt: location.recordedAt,
       updatedAt: location.updatedAt,
       source: location.source,
