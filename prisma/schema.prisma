@@ -36,6 +36,7 @@ model User {
   notifications           Notification[]
   transportOrders         TransportOrder[] @relation("CreatedByUser")
   assignedTransportOrders TransportOrder[] @relation("AssignedDriver")
+  driverLiveLocations     DriverLiveLocation[]
   uploadedOrderDocuments  OrderDocument[]  @relation("OrderDocumentUploadedBy")
 
   accounts Account[]
@@ -188,6 +189,10 @@ enum TransportOrderRoutePointSource {
   HERE
 }
 
+enum DriverLocationSource {
+  HERE_SDK
+}
+
 enum PartnerPoiType {
   FUEL
   PARKING
@@ -260,6 +265,7 @@ model TransportOrder {
   events         TransportOrderEvent[]
   routePoints    TransportOrderRoutePoint[]
   routePlan      TransportOrderRoutePlan?
+  driverLiveLocations DriverLiveLocation[]
 
   @@index([ztNumber])
   @@index([createdByUserId])
@@ -318,6 +324,33 @@ model TransportOrderRoutePreview {
 
   @@index([transportOrderId])
   @@index([expiresAt])
+}
+
+model DriverLiveLocation {
+  id               String               @id @default(cuid())
+
+  driverId         String
+  driver           User                 @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  transportOrderId String
+  transportOrder   TransportOrder       @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+
+  latitude         Float
+  longitude        Float
+
+  accuracyMeters   Float?
+  speedMps         Float?
+  bearingDegrees   Float?
+
+  recordedAt       DateTime
+  source           DriverLocationSource @default(HERE_SDK)
+
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@unique([transportOrderId, driverId])
+  @@index([transportOrderId])
+  @@index([driverId])
 }
 
 model TransportOrderEvent {

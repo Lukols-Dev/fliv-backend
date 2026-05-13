@@ -42,6 +42,7 @@ import { ROLE_DISPATCHER } from 'src/shared/constants/roles.constants';
 import { UploadDispatcherDocumentToTransportOrderUseCase } from '../../application/use-cases/upload-dispatcher-document-to-transport-order.usecase';
 import { UploadDriverOrderDocumentDto } from '../../application/dto/upload-driver-order-document.dto';
 import { TransportOrderRouteEditorService } from '../../application/services/transport-order-route-editor.service';
+import { DriverLiveLocationService } from '../../application/services/driver-live-location.service';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -60,6 +61,7 @@ export class DispatcherTransportOrdersController {
     private readonly getDispatcherOrderUseCase: GetDispatcherTransportOrderUseCase,
     private readonly uploadDispatcherDocumentUseCase: UploadDispatcherDocumentToTransportOrderUseCase,
     private readonly routeEditorService: TransportOrderRouteEditorService,
+    private readonly driverLiveLocationService: DriverLiveLocationService,
   ) {}
 
   @Post()
@@ -176,6 +178,20 @@ export class DispatcherTransportOrdersController {
   async detachDocument(@Param('orderDocumentId') orderDocumentId: string) {
     await this.detachDocumentUseCase.execute({ orderDocumentId });
     return { success: true };
+  }
+
+  @Get(':id/location')
+  @ApiOperation({ summary: 'Get latest driver location for transport order' })
+  async getLocation(@Param('id') id: string) {
+    return this.driverLiveLocationService.getForDispatcher(id);
+  }
+
+  @Get(':id/approach-route')
+  @ApiOperation({
+    summary: 'Calculate route from latest driver location to first route point',
+  })
+  async getApproachRoute(@Param('id') id: string) {
+    return this.routeEditorService.calculateApproachRouteForDispatcher(id);
   }
 
   @Get('route/geocode')

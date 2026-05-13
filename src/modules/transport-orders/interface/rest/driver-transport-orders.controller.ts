@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseInterceptors,
@@ -41,6 +42,8 @@ import { ROLE_DRIVER } from 'src/shared/constants/roles.constants';
 import { UploadDriverDocumentToTransportOrderUseCase } from '../../application/use-cases/upload-driver-document-to-transport-order.usecase';
 import { UploadDriverOrderDocumentDto } from '../../application/dto/upload-driver-order-document.dto';
 import { DetachDocumentFromTransportOrderUseCase } from '../../application/use-cases/detach-document-from-transport-order.usecase';
+import { DriverLiveLocationService } from '../../application/services/driver-live-location.service';
+import { UpsertDriverLiveLocationDto } from '../../application/dto/driver-live-location.dto';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -59,6 +62,7 @@ export class DriverTransportOrdersController {
     private readonly reportProblemUseCase: ReportTransportOrderProblemUseCase,
     private readonly uploadDriverDocumentUseCase: UploadDriverDocumentToTransportOrderUseCase,
     private readonly detachDocumentUseCase: DetachDocumentFromTransportOrderUseCase,
+    private readonly driverLiveLocationService: DriverLiveLocationService,
   ) {}
 
   @Get()
@@ -202,6 +206,22 @@ export class DriverTransportOrdersController {
         createdAt: event.createdAt,
       })),
     };
+  }
+
+  @Put(':id/location')
+  @ApiOperation({
+    summary: 'Store latest HERE SDK driver location for assigned order',
+  })
+  async upsertLocation(
+    @Session() session: UserSession,
+    @Param('id') id: string,
+    @Body() dto: UpsertDriverLiveLocationDto,
+  ) {
+    return this.driverLiveLocationService.upsertForDriver({
+      currentUserId: session.user.id,
+      transportOrderId: id,
+      payload: dto,
+    });
   }
 
   @Get(':id/documents')

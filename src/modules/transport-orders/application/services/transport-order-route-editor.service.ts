@@ -16,6 +16,7 @@ import {
   TransportOrderRoutePointSource as PrismaRoutePointSource,
   TransportOrderRoutePointType as PrismaRoutePointType,
 } from 'generated/prisma/client';
+import type { DriverLiveLocation } from 'generated/prisma/client';
 import {
   GEOCODING_SERVICE,
   type GeocodeAddressResult,
@@ -62,6 +63,30 @@ type CalculatedRoute = {
   distanceMeters: number;
   durationSeconds: number;
   calculatedAt: string;
+};
+
+type DriverLiveLocationPayload = {
+  driverId: string;
+  transportOrderId: string;
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number | null;
+  speedMetersPerSecond: number | null;
+  bearingDegrees: number | null;
+  recordedAt: Date;
+  updatedAt: Date;
+  source: DriverLiveLocation['source'];
+};
+
+export type DriverApproachRouteResponse = {
+  location: DriverLiveLocationPayload;
+  route: CalculatedRoute;
+  destinationRoutePoint: {
+    id: string;
+    sequence: number;
+    latitude: number;
+    longitude: number;
+  };
 };
 
 type HereRouteResponse = {
@@ -178,6 +203,101 @@ export class TransportOrderRouteEditorService {
       routePreviewId: preview.id,
       calculationHash,
       ...calculatedRoute,
+    };
+  }
+
+  async calculateApproachRouteForDispatcher(
+    orderId: string,
+  ): Promise<DriverApproachRouteResponse | null> {
+    const order = await this.prisma.transportOrder.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        routePoints: {
+          orderBy: { sequence: 'asc' },
+          take: 1,
+        },
+        routePlan: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Transport order not found');
+    }
+
+    const firstRoutePoint = order.routePoints[0];
+    if (!firstRoutePoint) {
+      return null;
+    }
+
+    const location = await this.prisma.driverLiveLocation.findFirst({
+      where: { transportOrderId: order.id },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    if (!location) {
+      return null;
+    }
+
+    const directDistanceMeters = calculateDirectDistanceMeters(
+      {
+        latitude: location.latitude,
+        longitude: location.longitude,
+      },
+      {
+        latitude: firstRoutePoint.latitude,
+        longitude: firstRoutePoint.longitude,
+      },
+    );
+
+    const routingProfile = normalizeRoutingProfile(
+      order.routePlan?.routingProfile as RoutingProfileDto | undefined,
+    );
+    const vehicleSpec = normalizeVehicleSpecForTransport(
+      routingProfile,
+      order.routePlan?.vehicleSpec as VehicleSpecDto | null | undefined,
+    );
+    const route =
+      directDistanceMeters <= 25
+        ? {
+            polyline: '',
+            distanceMeters: 0,
+            durationSeconds: 0,
+            calculatedAt: new Date().toISOString(),
+          }
+        : await this.calculateHereRoute(
+            {
+              routePoints: [
+                {
+                  sequence: 1,
+                  behavior: TransportOrderRoutePointBehavior.PASS_THROUGH,
+                  latitude: roundCoordinate(location.latitude),
+                  longitude: roundCoordinate(location.longitude),
+                },
+                {
+                  sequence: 2,
+                  behavior:
+                    firstRoutePoint.behavior as TransportOrderRoutePointBehavior,
+                  latitude: roundCoordinate(firstRoutePoint.latitude),
+                  longitude: roundCoordinate(firstRoutePoint.longitude),
+                },
+              ],
+              routingProfile,
+              vehicleSpec,
+            },
+            routingProfile,
+            vehicleSpec,
+          );
+
+    return {
+      location: mapDriverLiveLocation(location),
+      route,
+      destinationRoutePoint: {
+        id: firstRoutePoint.id,
+        sequence: firstRoutePoint.sequence,
+        latitude: firstRoutePoint.latitude,
+        longitude: firstRoutePoint.longitude,
+      },
     };
   }
 
@@ -530,6 +650,23 @@ function parseCalculatedRoute(value: Prisma.JsonValue): CalculatedRoute {
   };
 }
 
+function mapDriverLiveLocation(
+  location: DriverLiveLocation,
+): DriverLiveLocationPayload {
+  return {
+    driverId: location.driverId,
+    transportOrderId: location.transportOrderId,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    accuracyMeters: location.accuracyMeters,
+    speedMetersPerSecond: location.speedMps,
+    bearingDegrees: location.bearingDegrees,
+    recordedAt: location.recordedAt,
+    updatedAt: location.updatedAt,
+    source: location.source,
+  };
+}
+
 function buildAvoidFeatures(routingProfile: RoutingProfileDto): string[] {
   const features: string[] = [];
   if (routingProfile.avoidTolls) features.push('tollRoad');
@@ -577,6 +714,28 @@ function formatHereViaPoint(point: {
   return point.behavior === TransportOrderRoutePointBehavior.PASS_THROUGH
     ? `${base}!passThrough=true`
     : base;
+}
+
+function calculateDirectDistanceMeters(
+  a: { latitude: number; longitude: number },
+  b: { latitude: number; longitude: number },
+) {
+  const radiusMeters = 6_371_000;
+  const deltaLatitude = degreesToRadians(b.latitude - a.latitude);
+  const deltaLongitude = degreesToRadians(b.longitude - a.longitude);
+  const latitudeA = degreesToRadians(a.latitude);
+  const latitudeB = degreesToRadians(b.latitude);
+  const value =
+    Math.sin(deltaLatitude / 2) ** 2 +
+    Math.cos(latitudeA) *
+      Math.cos(latitudeB) *
+      Math.sin(deltaLongitude / 2) ** 2;
+
+  return 2 * radiusMeters * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+}
+
+function degreesToRadians(value: number) {
+  return (value * Math.PI) / 180;
 }
 
 function roundCoordinate(value: number): number {
