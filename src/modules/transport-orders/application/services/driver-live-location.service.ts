@@ -80,6 +80,24 @@ export class DriverLiveLocationService {
       throw new BadRequestException('Unsupported driver location source');
     }
 
+    const existing = await this.prisma.driverLiveLocation.findUnique({
+      where: {
+        transportOrderId_driverId: {
+          transportOrderId: order.id,
+          driverId: input.currentUserId,
+        },
+      },
+      select: { traveledDistanceMeters: true },
+    });
+
+    // Traveled distance is cumulative per transport order: keep the previous
+    // value when the field is absent, and never let it decrease.
+    const incomingTraveled = input.payload.traveledDistanceMeters;
+    const traveledDistanceMeters =
+      incomingTraveled == null
+        ? (existing?.traveledDistanceMeters ?? null)
+        : Math.max(incomingTraveled, existing?.traveledDistanceMeters ?? 0);
+
     const saved = await this.prisma.driverLiveLocation.upsert({
       where: {
         transportOrderId_driverId: {
@@ -96,7 +114,7 @@ export class DriverLiveLocationService {
         speedMps: input.payload.speedMetersPerSecond ?? null,
         bearingDegrees: input.payload.bearingDegrees ?? null,
         remainingDistanceMeters: input.payload.remainingDistanceMeters ?? null,
-        traveledDistanceMeters: input.payload.traveledDistanceMeters ?? null,
+        traveledDistanceMeters,
         remainingDurationSeconds: input.payload.remainingDurationSeconds ?? null,
         recordedAt,
         source: DriverLocationSource.HERE_SDK,
@@ -108,7 +126,7 @@ export class DriverLiveLocationService {
         speedMps: input.payload.speedMetersPerSecond ?? null,
         bearingDegrees: input.payload.bearingDegrees ?? null,
         remainingDistanceMeters: input.payload.remainingDistanceMeters ?? null,
-        traveledDistanceMeters: input.payload.traveledDistanceMeters ?? null,
+        traveledDistanceMeters,
         remainingDurationSeconds: input.payload.remainingDurationSeconds ?? null,
         recordedAt,
         source: DriverLocationSource.HERE_SDK,

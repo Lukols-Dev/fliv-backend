@@ -38,15 +38,17 @@ describe('DriverLiveLocationService', () => {
     const findUnique = jest.fn();
     const upsert = jest.fn();
     const findFirst = jest.fn();
+    const locationFindUnique = jest.fn();
     const prisma = {
       transportOrder: { findUnique },
-      driverLiveLocation: { upsert, findFirst },
+      driverLiveLocation: { upsert, findFirst, findUnique: locationFindUnique },
     };
 
     return {
       findUnique,
       upsert,
       findFirst,
+      locationFindUnique,
       service: new DriverLiveLocationService(
         prisma as unknown as PrismaService,
       ),
@@ -254,5 +256,92 @@ describe('DriverLiveLocationService', () => {
     findFirst.mockResolvedValue(null);
 
     await expect(service.getForDispatcher('order-1')).resolves.toBeNull();
+  });
+
+  it('preserves the stored traveled distance when the payload omits it', async () => {
+    const { findUnique, upsert, locationFindUnique, service } = createService();
+    findUnique.mockResolvedValue({
+      id: 'order-1',
+      assignedDriverUserId: 'driver-1',
+      status: TransportOrderStatus.IN_PROGRESS,
+    });
+    locationFindUnique.mockResolvedValue({ traveledDistanceMeters: 12000 });
+    upsert.mockResolvedValue(createRecord({ traveledDistanceMeters: 12000 }));
+
+    await service.upsertForDriver({
+      currentUserId: 'driver-1',
+      transportOrderId: 'order-1',
+      payload: {
+        latitude: 52.2297,
+        longitude: 21.0122,
+        recordedAt: now.toISOString(),
+        source: DriverLocationSource.HERE_SDK,
+      },
+    });
+
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ traveledDistanceMeters: 12000 }),
+        update: expect.objectContaining({ traveledDistanceMeters: 12000 }),
+      }),
+    );
+  });
+
+  it('does not let the traveled distance decrease for the same order', async () => {
+    const { findUnique, upsert, locationFindUnique, service } = createService();
+    findUnique.mockResolvedValue({
+      id: 'order-1',
+      assignedDriverUserId: 'driver-1',
+      status: TransportOrderStatus.IN_PROGRESS,
+    });
+    locationFindUnique.mockResolvedValue({ traveledDistanceMeters: 12000 });
+    upsert.mockResolvedValue(createRecord({ traveledDistanceMeters: 12000 }));
+
+    await service.upsertForDriver({
+      currentUserId: 'driver-1',
+      transportOrderId: 'order-1',
+      payload: {
+        latitude: 52.2297,
+        longitude: 21.0122,
+        traveledDistanceMeters: 0,
+        recordedAt: now.toISOString(),
+        source: DriverLocationSource.HERE_SDK,
+      },
+    });
+
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({ traveledDistanceMeters: 12000 }),
+      }),
+    );
+  });
+
+  it('advances the traveled distance when the payload reports a larger value', async () => {
+    const { findUnique, upsert, locationFindUnique, service } = createService();
+    findUnique.mockResolvedValue({
+      id: 'order-1',
+      assignedDriverUserId: 'driver-1',
+      status: TransportOrderStatus.IN_PROGRESS,
+    });
+    locationFindUnique.mockResolvedValue({ traveledDistanceMeters: 12000 });
+    upsert.mockResolvedValue(createRecord({ traveledDistanceMeters: 15000 }));
+
+    await service.upsertForDriver({
+      currentUserId: 'driver-1',
+      transportOrderId: 'order-1',
+      payload: {
+        latitude: 52.2297,
+        longitude: 21.0122,
+        traveledDistanceMeters: 15000,
+        recordedAt: now.toISOString(),
+        source: DriverLocationSource.HERE_SDK,
+      },
+    });
+
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({ traveledDistanceMeters: 15000 }),
+      }),
+    );
   });
 });
