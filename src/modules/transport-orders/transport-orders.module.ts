@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from 'src/infrastructure/prisma/prisma.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { DocumentsModule } from '../documents/documents.module';
+import { GeocodingModule } from '../geocoding/geocoding.module';
 import { TRANSPORT_ORDER_REPOSITORY } from './application/ports/transport-order.repository.port';
 import { ORDER_DOCUMENT_REPOSITORY } from './application/ports/order-document.repository.port';
 import { TRANSPORT_ORDER_EVENT_REPOSITORY } from './application/ports/transport-order-event.repository.port';
@@ -9,6 +10,9 @@ import { TRANSPORT_ORDER_EVENT_REPOSITORY } from './application/ports/transport-
 import { TransportOrdersPrismaRepository } from './infrastructure/presistence/transport-orders.prisma-repository';
 import { OrderDocumentsPrismaRepository } from './infrastructure/presistence/order-documents.prisma-repository';
 import { TransportOrderEventPrismaRepository } from './infrastructure/presistence/transport-order-event.prisma-repository';
+import { RoutePointGeocodingService } from './application/services/route-point-geocoding.service';
+import { TransportOrderRouteEditorService } from './application/services/transport-order-route-editor.service';
+import { DriverLiveLocationService } from './application/services/driver-live-location.service';
 
 import { CreateTransportOrderUseCase } from './application/use-cases/create-transport-order.usecase';
 import { UpdateTransportOrderUseCase } from './application/use-cases/update-transport-order.usecase';
@@ -24,12 +28,18 @@ import { ReportTransportOrderEventUseCase } from './application/use-cases/report
 import { ReportTransportOrderProblemUseCase } from './application/use-cases/report-transport-order-problem.usecase';
 import { UploadDriverDocumentToTransportOrderUseCase } from './application/use-cases/upload-driver-document-to-transport-order.usecase';
 import { UploadDispatcherDocumentToTransportOrderUseCase } from './application/use-cases/upload-dispatcher-document-to-transport-order.usecase';
+import { ConfirmRoutePointArrivalUseCase } from './application/use-cases/confirm-route-point-arrival.usecase';
 
 import { DispatcherTransportOrdersController } from './interface/rest/dispatcher-transport-orders.controller';
 import { DriverTransportOrdersController } from './interface/rest/driver-transport-orders.controller';
 
 @Module({
-  imports: [PrismaModule, NotificationsModule, DocumentsModule],
+  imports: [
+    PrismaModule,
+    NotificationsModule,
+    DocumentsModule,
+    GeocodingModule,
+  ],
   providers: [
     {
       provide: TRANSPORT_ORDER_REPOSITORY,
@@ -43,6 +53,9 @@ import { DriverTransportOrdersController } from './interface/rest/driver-transpo
       provide: TRANSPORT_ORDER_EVENT_REPOSITORY,
       useClass: TransportOrderEventPrismaRepository,
     },
+    RoutePointGeocodingService,
+    TransportOrderRouteEditorService,
+    DriverLiveLocationService,
     CreateTransportOrderUseCase,
     UpdateTransportOrderUseCase,
     DeleteTransportOrderUseCase,
@@ -57,6 +70,7 @@ import { DriverTransportOrdersController } from './interface/rest/driver-transpo
     ReportTransportOrderProblemUseCase,
     UploadDriverDocumentToTransportOrderUseCase,
     UploadDispatcherDocumentToTransportOrderUseCase,
+    ConfirmRoutePointArrivalUseCase,
   ],
   controllers: [
     DispatcherTransportOrdersController,

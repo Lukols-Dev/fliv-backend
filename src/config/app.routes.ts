@@ -8,6 +8,7 @@ export const API_VERSION_V1 = app.apiVersion;
 const usersRoot = 'users';
 const rolesRoot = 'roles';
 const transportOrdersRoot = 'transport-orders';
+const partnerPoisRoot = 'partner-pois';
 const notificationsRoot = 'notifications';
 const authRoot = 'auth';
 const documentsRoot = 'documents';
@@ -41,6 +42,13 @@ export const routesV1 = {
     },
     dispatcher: {
       root: `${dispatcherRoot}/${transportOrdersRoot}`,
+      byId: ':id',
+    },
+  },
+
+  partnerPois: {
+    dispatcher: {
+      root: `${dispatcherRoot}/${partnerPoisRoot}`,
       byId: ':id',
     },
   },

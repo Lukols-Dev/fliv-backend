@@ -25,4 +25,16 @@ export default () => ({
     apiSecret: process.env.CLOUDINARY_API_SECRET,
     defaultFolder: process.env.CLOUDINARY_DEFAULT_FOLDER ?? 'fliv',
   },
+
+  here: {
+    geocodingApiKey: process.env.HERE_GEOCODING_API_KEY,
+    geocodingBaseUrl:
+      process.env.HERE_GEOCODING_BASE_URL ??
+      'https://geocode.search.hereapi.com/v1/geocode',
+    routingApiKey:
+      process.env.HERE_ROUTING_API_KEY ?? process.env.HERE_GEOCODING_API_KEY,
+    routingBaseUrl:
+      process.env.HERE_ROUTING_BASE_URL ??
+      'https://router.hereapi.com/v8/routes',
+  },
 });

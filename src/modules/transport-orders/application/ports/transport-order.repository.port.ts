@@ -1,6 +1,9 @@
 import { UserId } from 'src/modules/users/domain/value-objects/user-id.vo';
 import type { TransportOrder } from '../../domain/entities/transport-order.entity';
 import { TransportOrderId } from '../../domain/value-objects/transport-order-id.vo';
+import { TransportOrderRoutePointBehavior } from '../../domain/value-objects/transport-order-route-point-behavior.vo';
+import { TransportOrderRoutePointSource } from '../../domain/value-objects/transport-order-route-point-source.vo';
+import { TransportOrderRoutePointType } from '../../domain/value-objects/transport-order-route-point-type.vo';
 import { TransportOrderStatus } from '../../domain/value-objects/transport-order-status.vo';
 
 export const TRANSPORT_ORDER_REPOSITORY = Symbol('TRANSPORT_ORDER_REPOSITORY');
@@ -30,6 +33,7 @@ export interface CreateTransportOrderInput {
   temperatureSensitive: boolean;
   notes?: string | null;
   createdByUserId: string;
+  routePoints?: TransportOrderRoutePointInput[];
 }
 
 export interface UpdateTransportOrderInput {
@@ -56,6 +60,19 @@ export interface UpdateTransportOrderInput {
   temperatureSensitive?: boolean;
   notes?: string | null;
   status?: TransportOrderStatus;
+  routePoints?: TransportOrderRoutePointInput[];
+}
+
+export interface TransportOrderRoutePointInput {
+  sequence: number;
+  type: TransportOrderRoutePointType;
+  behavior?: TransportOrderRoutePointBehavior;
+  source?: TransportOrderRoutePointSource;
+  isManual?: boolean;
+  label?: string | null;
+  address?: string | null;
+  latitude: number;
+  longitude: number;
 }
 
 export interface ListTransportOrdersParams {
@@ -76,6 +93,13 @@ export type ListTransportOrdersResult = {
   totalItems: number;
   totalPages: number;
 };
+
+export interface RecordRoutePointArrivalParams {
+  routePointId: string;
+  arrivedAt: Date;
+  arrivalLatitude: number;
+  arrivalLongitude: number;
+}
 
 export interface TransportOrderRepositoryPort {
   findById(id: TransportOrderId): Promise<TransportOrder | null>;
@@ -101,4 +125,8 @@ export interface TransportOrderRepositoryPort {
   ): Promise<TransportOrder[]>;
 
   assignToDriver(params: AssignDriverParams): Promise<TransportOrder>;
+
+  recordRoutePointArrival(
+    params: RecordRoutePointArrivalParams,
+  ): Promise<void>;
 }

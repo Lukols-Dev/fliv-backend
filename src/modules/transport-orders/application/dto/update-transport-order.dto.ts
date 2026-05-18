@@ -1,12 +1,17 @@
 import {
   IsBoolean,
+  IsArray,
+  ArrayUnique,
   IsDateString,
   IsEmail,
   IsNumber,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { TransportOrderStatus } from '../../domain/value-objects/transport-order-status.vo';
+import { TransportOrderRoutePointDto } from './transport-order-route-point.dto';
 
 export class UpdateTransportOrderDto {
   @IsOptional()
@@ -99,4 +104,11 @@ export class UpdateTransportOrderDto {
 
   @IsOptional()
   status?: TransportOrderStatus;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique((point: TransportOrderRoutePointDto) => point.sequence)
+  @ValidateNested({ each: true })
+  @Type(() => TransportOrderRoutePointDto)
+  routePoints?: TransportOrderRoutePointDto[];
 }

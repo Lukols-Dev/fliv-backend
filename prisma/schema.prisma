@@ -36,6 +36,7 @@ model User {
   notifications           Notification[]
   transportOrders         TransportOrder[] @relation("CreatedByUser")
   assignedTransportOrders TransportOrder[] @relation("AssignedDriver")
+  driverLiveLocations     DriverLiveLocation[]
   uploadedOrderDocuments  OrderDocument[]  @relation("OrderDocumentUploadedBy")
 
   accounts Account[]
@@ -168,9 +169,57 @@ enum TransportOrderEventType {
   ORDER_COMPLETED
 }
 
+enum TransportOrderRoutePointType {
+  LOADING
+  UNLOADING
+  FUEL
+  PARKING
+  SERVICE
+  OTHER
+}
+
+enum TransportOrderRoutePointBehavior {
+  STOP
+  PASS_THROUGH
+}
+
+enum TransportOrderRoutePointSource {
+  DISPATCHER
+  SYSTEM
+  HERE
+}
+
+enum DriverLocationSource {
+  HERE_SDK
+}
+
+enum PartnerPoiType {
+  FUEL
+  PARKING
+  SERVICE
+  OTHER
+}
+
 enum NotificationType {
   ORDER_STATUS_CHANGED
   ORDER_EVENT
+}
+
+model PartnerPoi {
+  id        String         @id @default(cuid())
+  name      String?
+  type      PartnerPoiType @default(FUEL)
+
+  address   String
+  latitude  Float
+  longitude Float
+
+  isActive  Boolean        @default(true)
+
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([isActive, latitude, longitude])
 }
 
 model TransportOrder {
@@ -214,10 +263,102 @@ model TransportOrder {
 
   orderDocuments OrderDocument[]
   events         TransportOrderEvent[]
+  routePoints    TransportOrderRoutePoint[]
+  routePlan      TransportOrderRoutePlan?
+  driverLiveLocations DriverLiveLocation[]
 
   @@index([ztNumber])
   @@index([createdByUserId])
   @@index([assignedDriverUserId])
+}
+
+model TransportOrderRoutePoint {
+  id               String                       @id @default(cuid())
+  transportOrderId String
+  transportOrder   TransportOrder               @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+  sequence         Int
+  type             TransportOrderRoutePointType
+  behavior         TransportOrderRoutePointBehavior @default(STOP)
+  source           TransportOrderRoutePointSource @default(DISPATCHER)
+  isManual         Boolean                      @default(true)
+  label            String?
+  address          String?
+  latitude         Float
+  longitude        Float
+
+  arrivedAt        DateTime?
+  arrivalLatitude  Float?
+  arrivalLongitude Float?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([transportOrderId, sequence])
+  @@index([transportOrderId])
+}
+
+model TransportOrderRoutePlan {
+  id               String         @id @default(cuid())
+  transportOrderId String         @unique
+  transportOrder   TransportOrder @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+
+  routingProfile   Json
+  vehicleSpec      Json?
+
+  distanceMeters   Int
+  durationSeconds  Int
+  polyline         String
+  calculationHash  String
+  calculatedAt     DateTime
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model TransportOrderRoutePreview {
+  id               String   @id @default(cuid())
+  transportOrderId String
+  calculationHash  String
+
+  calculationInput Json
+  calculatedRoute  Json
+
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+
+  @@index([transportOrderId])
+  @@index([expiresAt])
+}
+
+model DriverLiveLocation {
+  id               String               @id @default(cuid())
+
+  driverId         String
+  driver           User                 @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  transportOrderId String
+  transportOrder   TransportOrder       @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+
+  latitude         Float
+  longitude        Float
+
+  accuracyMeters   Float?
+  speedMps         Float?
+  bearingDegrees   Float?
+
+  remainingDistanceMeters  Int?
+  traveledDistanceMeters   Int?
+  remainingDurationSeconds Int?
+
+  recordedAt       DateTime
+  source           DriverLocationSource @default(HERE_SDK)
+
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@unique([transportOrderId, driverId])
+  @@index([transportOrderId])
+  @@index([driverId])
 }
 
 model TransportOrderEvent {

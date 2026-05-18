@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseInterceptors,
@@ -41,6 +42,10 @@ import { ROLE_DRIVER } from 'src/shared/constants/roles.constants';
 import { UploadDriverDocumentToTransportOrderUseCase } from '../../application/use-cases/upload-driver-document-to-transport-order.usecase';
 import { UploadDriverOrderDocumentDto } from '../../application/dto/upload-driver-order-document.dto';
 import { DetachDocumentFromTransportOrderUseCase } from '../../application/use-cases/detach-document-from-transport-order.usecase';
+import { DriverLiveLocationService } from '../../application/services/driver-live-location.service';
+import { UpsertDriverLiveLocationDto } from '../../application/dto/driver-live-location.dto';
+import { ConfirmRoutePointArrivalUseCase } from '../../application/use-cases/confirm-route-point-arrival.usecase';
+import { ConfirmRoutePointArrivalDto } from '../../application/dto/confirm-route-point-arrival.dto';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -59,6 +64,8 @@ export class DriverTransportOrdersController {
     private readonly reportProblemUseCase: ReportTransportOrderProblemUseCase,
     private readonly uploadDriverDocumentUseCase: UploadDriverDocumentToTransportOrderUseCase,
     private readonly detachDocumentUseCase: DetachDocumentFromTransportOrderUseCase,
+    private readonly driverLiveLocationService: DriverLiveLocationService,
+    private readonly confirmRoutePointArrivalUseCase: ConfirmRoutePointArrivalUseCase,
   ) {}
 
   @Get()
@@ -204,6 +211,22 @@ export class DriverTransportOrdersController {
     };
   }
 
+  @Put(':id/location')
+  @ApiOperation({
+    summary: 'Store latest HERE SDK driver location for assigned order',
+  })
+  async upsertLocation(
+    @Session() session: UserSession,
+    @Param('id') id: string,
+    @Body() dto: UpsertDriverLiveLocationDto,
+  ) {
+    return this.driverLiveLocationService.upsertForDriver({
+      currentUserId: session.user.id,
+      transportOrderId: id,
+      payload: dto,
+    });
+  }
+
   @Get(':id/documents')
   @ApiOperation({ summary: 'List documents for transport order (driver)' })
   async listDocuments(
@@ -321,6 +344,31 @@ export class DriverTransportOrdersController {
     return { success: true };
   }
 
+  @Post(':id/route-points/:routePointId/arrival')
+  @ApiOperation({ summary: 'Confirm driver arrival at a route point' })
+  async confirmRoutePointArrival(
+    @Session() session: UserSession,
+    @Param('id') id: string,
+    @Param('routePointId') routePointId: string,
+    @Body() dto: ConfirmRoutePointArrivalDto,
+  ) {
+    const result = await this.confirmRoutePointArrivalUseCase.execute({
+      currentUserId: session.user.id,
+      orderId: id,
+      routePointId,
+      sequence: dto.sequence,
+      confirmedAt: new Date(dto.confirmedAt),
+      latitude: dto.latitude,
+      longitude: dto.longitude,
+    });
+
+    return {
+      routePointId: result.routePointId,
+      sequence: result.sequence,
+      arrivedAt: result.arrivedAt,
+    };
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get transport order details for driver' })
   async getOne(@Session() session: UserSession, @Param('id') id: string) {
@@ -350,6 +398,30 @@ export class DriverTransportOrdersController {
       cargoDescription: order.cargoDescription,
       temperatureSensitive: order.temperatureSensitive,
       notes: order.notes,
+      routePoints: order.routePoints.map((point) => ({
+        id: point.id,
+        sequence: point.sequence,
+        type: point.type,
+        behavior: point.behavior,
+        source: point.source,
+        isManual: point.isManual,
+        label: point.label,
+        address: point.address,
+        latitude: point.latitude,
+        longitude: point.longitude,
+        arrivedAt: point.arrivedAt,
+      })),
+      routePlan: order.routePlan
+        ? {
+            routingProfile: order.routePlan.routingProfile,
+            vehicleSpec: order.routePlan.vehicleSpec,
+            distanceMeters: order.routePlan.distanceMeters,
+            durationSeconds: order.routePlan.durationSeconds,
+            polyline: order.routePlan.polyline,
+            calculationHash: order.routePlan.calculationHash,
+            calculatedAt: order.routePlan.calculatedAt,
+          }
+        : null,
       documents: order.documents.map((doc) => ({
         id: doc.id.value,
         title: doc.title ?? null,

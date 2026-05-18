@@ -4,6 +4,11 @@ import type {
   TransportOrderEvent as PrismaTransportOrderEvent,
   TransportOrderStatus as PrismaTransportOrderStatus,
   TransportOrderEventType as PrismaTransportOrderEventType,
+  TransportOrderRoutePlan as PrismaTransportOrderRoutePlan,
+  TransportOrderRoutePoint as PrismaTransportOrderRoutePoint,
+  TransportOrderRoutePointBehavior as PrismaTransportOrderRoutePointBehavior,
+  TransportOrderRoutePointSource as PrismaTransportOrderRoutePointSource,
+  TransportOrderRoutePointType as PrismaTransportOrderRoutePointType,
 } from 'generated/prisma/client';
 import { TransportOrder } from '../../domain/entities/transport-order.entity';
 import { TransportOrderId } from '../../domain/value-objects/transport-order-id.vo';
@@ -13,10 +18,17 @@ import { TransportOrderDocumentId } from '../../domain/value-objects/transport-o
 import { TransportOrderEvent } from '../../domain/entities/transport-order-event.entity';
 import { TransportOrderEventId } from '../../domain/value-objects/transport-order-event-id.vo';
 import { TransportOrderEventType } from '../../domain/value-objects/transport-order-event-type.vo';
+import { TransportOrderRoutePlan } from '../../domain/entities/transport-order-route-plan.entity';
+import { TransportOrderRoutePoint } from '../../domain/entities/transport-order-route-point.entity';
+import { TransportOrderRoutePointBehavior } from '../../domain/value-objects/transport-order-route-point-behavior.vo';
+import { TransportOrderRoutePointSource } from '../../domain/value-objects/transport-order-route-point-source.vo';
+import { TransportOrderRoutePointType } from '../../domain/value-objects/transport-order-route-point-type.vo';
 
 type TransportOrderWithDocuments = PrismaTransportOrder & {
   orderDocuments: PrismaTransportOrderDocument[];
   events?: PrismaTransportOrderEvent[];
+  routePoints?: PrismaTransportOrderRoutePoint[];
+  routePlan?: PrismaTransportOrderRoutePlan | null;
 };
 
 export class TransportOrderMapper {
@@ -70,6 +82,8 @@ export class TransportOrderMapper {
       record.updatedAt,
       documents,
       mapEvents(record.events),
+      mapRoutePoints(record.routePoints),
+      mapRoutePlan(record.routePlan),
     );
   }
 }
@@ -100,6 +114,45 @@ function mapEvents(
         event.createdByUserId,
         event.createdAt,
       ),
+  );
+}
+
+function mapRoutePoints(
+  routePoints: PrismaTransportOrderRoutePoint[] | undefined,
+): TransportOrderRoutePoint[] {
+  return (routePoints ?? []).map(
+    (point) =>
+      new TransportOrderRoutePoint(
+        point.id,
+        point.sequence,
+        mapPrismaRoutePointType(point.type),
+        mapPrismaRoutePointBehavior(point.behavior),
+        mapPrismaRoutePointSource(point.source),
+        point.isManual,
+        point.label ?? null,
+        point.address ?? null,
+        point.latitude,
+        point.longitude,
+        point.arrivedAt ?? null,
+        point.arrivalLatitude ?? null,
+        point.arrivalLongitude ?? null,
+      ),
+  );
+}
+
+function mapRoutePlan(
+  routePlan: PrismaTransportOrderRoutePlan | null | undefined,
+): TransportOrderRoutePlan | null {
+  if (!routePlan) return null;
+
+  return new TransportOrderRoutePlan(
+    routePlan.routingProfile,
+    routePlan.vehicleSpec ?? null,
+    routePlan.distanceMeters,
+    routePlan.durationSeconds,
+    routePlan.polyline,
+    routePlan.calculationHash,
+    routePlan.calculatedAt,
   );
 }
 
@@ -165,5 +218,60 @@ function mapPrismaEventType(
       throw new Error(
         `Unsupported transport order event type: ${type as string}`,
       );
+  }
+}
+
+function mapPrismaRoutePointType(
+  type: PrismaTransportOrderRoutePointType,
+): TransportOrderRoutePointType {
+  switch (type) {
+    case 'LOADING':
+      return TransportOrderRoutePointType.LOADING;
+    case 'UNLOADING':
+      return TransportOrderRoutePointType.UNLOADING;
+    case 'FUEL':
+      return TransportOrderRoutePointType.FUEL;
+    case 'PARKING':
+      return TransportOrderRoutePointType.PARKING;
+    case 'SERVICE':
+      return TransportOrderRoutePointType.SERVICE;
+    case 'OTHER':
+      return TransportOrderRoutePointType.OTHER;
+    default: {
+      const _exhaustive: never = type;
+      return _exhaustive;
+    }
+  }
+}
+
+function mapPrismaRoutePointBehavior(
+  behavior: PrismaTransportOrderRoutePointBehavior,
+): TransportOrderRoutePointBehavior {
+  switch (behavior) {
+    case 'STOP':
+      return TransportOrderRoutePointBehavior.STOP;
+    case 'PASS_THROUGH':
+      return TransportOrderRoutePointBehavior.PASS_THROUGH;
+    default: {
+      const _exhaustive: never = behavior;
+      return _exhaustive;
+    }
+  }
+}
+
+function mapPrismaRoutePointSource(
+  source: PrismaTransportOrderRoutePointSource,
+): TransportOrderRoutePointSource {
+  switch (source) {
+    case 'DISPATCHER':
+      return TransportOrderRoutePointSource.DISPATCHER;
+    case 'SYSTEM':
+      return TransportOrderRoutePointSource.SYSTEM;
+    case 'HERE':
+      return TransportOrderRoutePointSource.HERE;
+    default: {
+      const _exhaustive: never = source;
+      return _exhaustive;
+    }
   }
 }

@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 import {
   Prisma,
+  TransportOrderRoutePointBehavior as PrismaTransportOrderRoutePointBehavior,
+  TransportOrderRoutePointSource as PrismaTransportOrderRoutePointSource,
   TransportOrderStatus as PrismaTransportOrderStatus,
 } from 'generated/prisma/client';
 import {
@@ -10,6 +12,8 @@ import {
   type UpdateTransportOrderInput,
   type ListTransportOrdersParams,
   type AssignDriverParams,
+  type TransportOrderRoutePointInput,
+  type RecordRoutePointArrivalParams,
   ListTransportOrdersResult,
 } from '../../application/ports/transport-order.repository.port';
 import { TransportOrder } from '../../domain/entities/transport-order.entity';
@@ -21,8 +25,14 @@ type TransportOrderWithDocuments = Prisma.TransportOrderGetPayload<{
   include: {
     orderDocuments: true;
     events: { orderBy: { createdAt: 'asc' } };
+    routePoints: { orderBy: { sequence: 'asc' } };
+    routePlan: true;
   };
 }>;
+
+const routePointsInclude = {
+  orderBy: { sequence: 'asc' as const },
+};
 
 @Injectable()
 export class TransportOrdersPrismaRepository
@@ -38,6 +48,8 @@ export class TransportOrdersPrismaRepository
         events: {
           orderBy: { createdAt: 'asc' },
         },
+        routePoints: routePointsInclude,
+        routePlan: true,
       },
     });
 
@@ -56,6 +68,8 @@ export class TransportOrdersPrismaRepository
         events: {
           orderBy: { createdAt: 'asc' },
         },
+        routePoints: routePointsInclude,
+        routePlan: true,
       },
     });
 
@@ -93,12 +107,17 @@ export class TransportOrdersPrismaRepository
         temperatureSensitive: input.temperatureSensitive,
         notes: input.notes ?? null,
         createdByUserId: input.createdByUserId,
+        routePoints: input.routePoints?.length
+          ? { create: mapRoutePointInputs(input.routePoints) }
+          : undefined,
       },
       include: {
         orderDocuments: true,
         events: {
           orderBy: { createdAt: 'asc' },
         },
+        routePoints: routePointsInclude,
+        routePlan: true,
       },
     });
 
@@ -135,12 +154,21 @@ export class TransportOrdersPrismaRepository
         temperatureSensitive: input.temperatureSensitive,
         notes: input.notes,
         status: input.status,
+        routePoints:
+          input.routePoints === undefined
+            ? undefined
+            : {
+                deleteMany: {},
+                create: mapRoutePointInputs(input.routePoints),
+              },
       },
       include: {
         orderDocuments: true,
         events: {
           orderBy: { createdAt: 'asc' },
         },
+        routePoints: routePointsInclude,
+        routePlan: true,
       },
     });
 
@@ -193,6 +221,8 @@ export class TransportOrdersPrismaRepository
         include: {
           orderDocuments: true,
           events: { orderBy: { createdAt: 'asc' } },
+          routePoints: routePointsInclude,
+          routePlan: true,
         },
       }),
     ]);
@@ -251,6 +281,8 @@ export class TransportOrdersPrismaRepository
           events: {
             orderBy: { createdAt: 'asc' },
           },
+          routePoints: routePointsInclude,
+          routePlan: true,
         },
       });
 
@@ -268,9 +300,41 @@ export class TransportOrdersPrismaRepository
         events: {
           orderBy: { createdAt: 'asc' },
         },
+        routePoints: routePointsInclude,
+        routePlan: true,
       },
     });
 
     return TransportOrderMapper.toDomain(record);
   }
+
+  async recordRoutePointArrival(
+    params: RecordRoutePointArrivalParams,
+  ): Promise<void> {
+    await this.prisma.transportOrderRoutePoint.update({
+      where: { id: params.routePointId },
+      data: {
+        arrivedAt: params.arrivedAt,
+        arrivalLatitude: params.arrivalLatitude,
+        arrivalLongitude: params.arrivalLongitude,
+      },
+    });
+  }
+}
+
+function mapRoutePointInputs(routePoints: TransportOrderRoutePointInput[]) {
+  return routePoints
+    .slice()
+    .sort((a, b) => a.sequence - b.sequence)
+    .map((point) => ({
+      sequence: point.sequence,
+      type: point.type,
+      behavior: point.behavior ?? PrismaTransportOrderRoutePointBehavior.STOP,
+      source: point.source ?? PrismaTransportOrderRoutePointSource.DISPATCHER,
+      isManual: point.isManual ?? true,
+      label: point.label ?? null,
+      address: point.address ?? null,
+      latitude: point.latitude,
+      longitude: point.longitude,
+    }));
 }
