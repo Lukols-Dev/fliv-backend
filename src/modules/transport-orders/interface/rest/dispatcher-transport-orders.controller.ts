@@ -323,6 +323,7 @@ export class DispatcherTransportOrdersController {
         address: point.address,
         latitude: point.latitude,
         longitude: point.longitude,
+        arrivedAt: point.arrivedAt,
       })),
       routePlan: order.routePlan
         ? {
