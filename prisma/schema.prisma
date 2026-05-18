@@ -286,6 +286,10 @@ model TransportOrderRoutePoint {
   latitude         Float
   longitude        Float
 
+  arrivedAt        DateTime?
+  arrivalLatitude  Float?
+  arrivalLongitude Float?
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

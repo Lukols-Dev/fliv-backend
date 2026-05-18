@@ -13,6 +13,7 @@ import {
   type ListTransportOrdersParams,
   type AssignDriverParams,
   type TransportOrderRoutePointInput,
+  type RecordRoutePointArrivalParams,
   ListTransportOrdersResult,
 } from '../../application/ports/transport-order.repository.port';
 import { TransportOrder } from '../../domain/entities/transport-order.entity';
@@ -305,6 +306,19 @@ export class TransportOrdersPrismaRepository
     });
 
     return TransportOrderMapper.toDomain(record);
+  }
+
+  async recordRoutePointArrival(
+    params: RecordRoutePointArrivalParams,
+  ): Promise<void> {
+    await this.prisma.transportOrderRoutePoint.update({
+      where: { id: params.routePointId },
+      data: {
+        arrivedAt: params.arrivedAt,
+        arrivalLatitude: params.arrivalLatitude,
+        arrivalLongitude: params.arrivalLongitude,
+      },
+    });
   }
 }
 

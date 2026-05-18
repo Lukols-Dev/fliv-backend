@@ -14,5 +14,8 @@ export class TransportOrderRoutePoint {
     public readonly address: string | null,
     public readonly latitude: number,
     public readonly longitude: number,
+    public readonly arrivedAt: Date | null = null,
+    public readonly arrivalLatitude: number | null = null,
+    public readonly arrivalLongitude: number | null = null,
   ) {}
 }

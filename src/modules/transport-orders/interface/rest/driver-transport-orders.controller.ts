@@ -44,6 +44,8 @@ import { UploadDriverOrderDocumentDto } from '../../application/dto/upload-drive
 import { DetachDocumentFromTransportOrderUseCase } from '../../application/use-cases/detach-document-from-transport-order.usecase';
 import { DriverLiveLocationService } from '../../application/services/driver-live-location.service';
 import { UpsertDriverLiveLocationDto } from '../../application/dto/driver-live-location.dto';
+import { ConfirmRoutePointArrivalUseCase } from '../../application/use-cases/confirm-route-point-arrival.usecase';
+import { ConfirmRoutePointArrivalDto } from '../../application/dto/confirm-route-point-arrival.dto';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -63,6 +65,7 @@ export class DriverTransportOrdersController {
     private readonly uploadDriverDocumentUseCase: UploadDriverDocumentToTransportOrderUseCase,
     private readonly detachDocumentUseCase: DetachDocumentFromTransportOrderUseCase,
     private readonly driverLiveLocationService: DriverLiveLocationService,
+    private readonly confirmRoutePointArrivalUseCase: ConfirmRoutePointArrivalUseCase,
   ) {}
 
   @Get()
@@ -341,6 +344,31 @@ export class DriverTransportOrdersController {
     return { success: true };
   }
 
+  @Post(':id/route-points/:routePointId/arrival')
+  @ApiOperation({ summary: 'Confirm driver arrival at a route point' })
+  async confirmRoutePointArrival(
+    @Session() session: UserSession,
+    @Param('id') id: string,
+    @Param('routePointId') routePointId: string,
+    @Body() dto: ConfirmRoutePointArrivalDto,
+  ) {
+    const result = await this.confirmRoutePointArrivalUseCase.execute({
+      currentUserId: session.user.id,
+      orderId: id,
+      routePointId,
+      sequence: dto.sequence,
+      confirmedAt: new Date(dto.confirmedAt),
+      latitude: dto.latitude,
+      longitude: dto.longitude,
+    });
+
+    return {
+      routePointId: result.routePointId,
+      sequence: result.sequence,
+      arrivedAt: result.arrivedAt,
+    };
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get transport order details for driver' })
   async getOne(@Session() session: UserSession, @Param('id') id: string) {
@@ -381,6 +409,7 @@ export class DriverTransportOrdersController {
         address: point.address,
         latitude: point.latitude,
         longitude: point.longitude,
+        arrivedAt: point.arrivedAt,
       })),
       routePlan: order.routePlan
         ? {

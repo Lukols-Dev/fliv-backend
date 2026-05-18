@@ -133,6 +133,9 @@ function mapRoutePoints(
         point.address ?? null,
         point.latitude,
         point.longitude,
+        point.arrivedAt ?? null,
+        point.arrivalLatitude ?? null,
+        point.arrivalLongitude ?? null,
       ),
   );
 }

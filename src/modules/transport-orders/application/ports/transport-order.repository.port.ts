@@ -94,6 +94,13 @@ export type ListTransportOrdersResult = {
   totalPages: number;
 };
 
+export interface RecordRoutePointArrivalParams {
+  routePointId: string;
+  arrivedAt: Date;
+  arrivalLatitude: number;
+  arrivalLongitude: number;
+}
+
 export interface TransportOrderRepositoryPort {
   findById(id: TransportOrderId): Promise<TransportOrder | null>;
   findByZtNumber(ztNumber: string): Promise<TransportOrder | null>;
@@ -118,4 +125,8 @@ export interface TransportOrderRepositoryPort {
   ): Promise<TransportOrder[]>;
 
   assignToDriver(params: AssignDriverParams): Promise<TransportOrder>;
+
+  recordRoutePointArrival(
+    params: RecordRoutePointArrivalParams,
+  ): Promise<void>;
 }
