@@ -15,6 +15,7 @@ export interface DriverProfileResult {
   firstName: string | null;
   lastName: string | null;
   phone: string | null;
+  avatarUrl: string | null;
   isActive: boolean;
   roles: string[];
   driverProfile: {
@@ -58,6 +59,7 @@ export class GetDriverProfileUseCase {
       firstName: user.firstName ?? null,
       lastName: user.lastName ?? null,
       phone: user.phone ?? null,
+      avatarUrl: user.avatarUrl ?? null,
       isActive: user.isActive,
       roles: user.roles,
       driverProfile: driverProfile

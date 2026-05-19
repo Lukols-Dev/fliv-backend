@@ -168,6 +168,9 @@ export const betterAuthClient = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    // No session on sign-up: registration must not log the user in.
+    // Mobile accounts still require manual DB activation before sign-in.
+    autoSignIn: false,
   },
   advanced: {
     disableOriginCheck: true, // TODO: remove this on production, ONLY FOR DEV!

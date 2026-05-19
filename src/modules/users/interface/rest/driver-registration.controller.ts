@@ -7,11 +7,11 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { Session } from '@thallesp/nestjs-better-auth';
+import { AllowAnonymous, Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 
-import { RegisterDriverDto } from '../../application/dto/register-driver.dto';
-import { RegisterDriverUseCase } from '../../application/use-cases/register-driver.usecase';
+import { RegisterDriverAccountDto } from '../../application/dto/register-driver-account.dto';
+import { RegisterDriverAccountUseCase } from '../../application/use-cases/register-driver-account.usecase';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateUserProfileDto } from '../../application/dto/update-user-profile.dto';
 import { UpdateUserProfileUseCase } from '../../application/use-cases/update-user-profile.usecase';
@@ -26,22 +26,26 @@ import { ROLE_ADMIN, ROLE_DRIVER } from 'src/shared/constants/roles.constants';
 @Controller('driver')
 export class DriverRegistrationController {
   constructor(
-    private readonly registerDriverUseCase: RegisterDriverUseCase,
+    private readonly registerDriverAccountUseCase: RegisterDriverAccountUseCase,
     private readonly updateUserProfileUseCase: UpdateUserProfileUseCase,
     private readonly updateDriverUseCase: UpdateDriverUseCase,
     private readonly deleteDriverProfileUseCase: DeleteDriverProfileUseCase,
     private readonly getDriverProfileUseCase: GetDriverProfileUseCase,
   ) {}
 
-  @Post('register')
-  async register(
-    @Session() session: UserSession,
-    @Body() dto: RegisterDriverDto,
+  @Post('register-account')
+  @AllowAnonymous()
+  @ApiOperation({
+    summary: 'Self-register a driver account (account + driver profile)',
+    description:
+      'Creates the auth account and the driver profile atomically. ' +
+      'No session is established — the account requires manual activation ' +
+      'before the driver can sign in.',
+  })
+  async registerAccount(
+    @Body() dto: RegisterDriverAccountDto,
   ): Promise<{ success: boolean }> {
-    await this.registerDriverUseCase.execute({
-      currentUserId: session.user.id,
-      payload: dto,
-    });
+    await this.registerDriverAccountUseCase.execute(dto);
 
     return { success: true };
   }
