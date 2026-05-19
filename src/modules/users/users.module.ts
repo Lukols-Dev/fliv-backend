@@ -11,6 +11,7 @@ import { RolesPrismaRepository } from './infrastructure/presistence/roles.prisma
 import { DriverProfilePrismaRepository } from './infrastructure/presistence/driver-profile.prisma-repository';
 
 import { RegisterDriverUseCase } from './application/use-cases/register-driver.usecase';
+import { RegisterDriverAccountUseCase } from './application/use-cases/register-driver-account.usecase';
 import { ActivateUserUseCase } from './application/use-cases/activate-user.usecase';
 import { UpdateDriverUseCase } from './application/use-cases/update-driver-documents.usecase';
 import { AssignRoleToUserUseCase } from './application/use-cases/assign-role-to-user.usecase';
@@ -47,6 +48,7 @@ import { UploadUserAvatarUseCase } from './application/use-cases/upload-user-ava
     GetDriverProfileUseCase,
     GetCurrentUserUseCase,
     RegisterDriverUseCase,
+    RegisterDriverAccountUseCase,
     RegisterUserProfileUseCase,
     UpdateUserProfileUseCase,
     UpdateDriverUseCase,
