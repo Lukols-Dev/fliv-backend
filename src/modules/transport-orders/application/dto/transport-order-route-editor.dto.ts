@@ -73,6 +73,10 @@ export class RoutePointDraftDto {
 }
 
 export class RoutingProfileDto {
+  @IsOptional()
+  @IsIn(['here', 'manual'])
+  mode?: 'here' | 'manual';
+
   @IsIn(['car', 'truck'])
   transportMode!: 'car' | 'truck';
 

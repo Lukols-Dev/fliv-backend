@@ -126,6 +126,8 @@ export interface TransportOrderRepositoryPort {
 
   assignToDriver(params: AssignDriverParams): Promise<TransportOrder>;
 
+  unassignFromDriver(orderId: TransportOrderId): Promise<TransportOrder>;
+
   recordRoutePointArrival(
     params: RecordRoutePointArrivalParams,
   ): Promise<void>;

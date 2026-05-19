@@ -182,11 +182,14 @@ export class TransportOrderRouteEditorService {
       vehicleSpec,
     );
     const calculationHash = calculateHash(calculationInput);
-    const calculatedRoute = await this.calculateHereRoute(
-      calculationInput,
-      routingProfile,
-      vehicleSpec,
-    );
+    const calculatedRoute =
+      routingProfile.mode === 'manual'
+        ? calculateManualRoute(calculationInput.routePoints)
+        : await this.calculateHereRoute(
+            calculationInput,
+            routingProfile,
+            vehicleSpec,
+          );
     const expiresAt = new Date(Date.now() + PREVIEW_TTL_MINUTES * 60 * 1000);
 
     const preview = await this.prisma.transportOrderRoutePreview.create({
@@ -520,6 +523,7 @@ function normalizeRoutingProfile(
   routingProfile: RoutingProfileDto | undefined,
 ): RoutingProfileDto {
   return {
+    mode: routingProfile?.mode ?? 'here',
     transportMode: routingProfile?.transportMode ?? 'truck',
     routingMode: routingProfile?.routingMode ?? 'fast',
     trafficMode: routingProfile?.trafficMode ?? 'default',
@@ -746,6 +750,78 @@ function nullableInteger(value: number | null | undefined): number | null {
   return typeof value === 'number' && Number.isFinite(value)
     ? Math.trunc(value)
     : null;
+}
+
+// HERE Flexible Polyline encoding (v1, 2D, precision=5)
+// Spec: https://github.com/heremaps/flexible-polyline
+const FLEX_POLYLINE_TABLE =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+const FLEX_POLYLINE_PRECISION = 5;
+
+function encodeUnsignedVar(value: number): string {
+  let result = '';
+  let remaining = value;
+  while (remaining > 0x1f) {
+    result += FLEX_POLYLINE_TABLE[(remaining & 0x1f) | 0x20];
+    remaining = remaining >> 5;
+  }
+  result += FLEX_POLYLINE_TABLE[remaining & 0x1f];
+  return result;
+}
+
+function encodeSignedVar(value: number): string {
+  const shifted = value < 0 ? ~(value << 1) : value << 1;
+  return encodeUnsignedVar(shifted);
+}
+
+function encodeFlexPolyline(
+  points: Array<{ latitude: number; longitude: number }>,
+): string {
+  const precision = FLEX_POLYLINE_PRECISION;
+  const factor = Math.pow(10, precision);
+  // Header: version=1 byte + encoded header value
+  // headerVal = (thirdDimPrecision=0 << 7) | (thirdDim=0 << 4) | precision
+  const header =
+    FLEX_POLYLINE_TABLE[1] + encodeUnsignedVar(precision);
+
+  let output = header;
+  let lastLat = 0;
+  let lastLng = 0;
+
+  for (const point of points) {
+    const scaledLat = Math.round(point.latitude * factor);
+    const scaledLng = Math.round(point.longitude * factor);
+    output += encodeSignedVar(scaledLat - lastLat);
+    output += encodeSignedVar(scaledLng - lastLng);
+    lastLat = scaledLat;
+    lastLng = scaledLng;
+  }
+
+  return output;
+}
+
+function calculateManualRoute(
+  routePoints: Array<{ latitude: number; longitude: number }>,
+): CalculatedRoute {
+  let totalDistanceMeters = 0;
+  for (let i = 1; i < routePoints.length; i++) {
+    totalDistanceMeters += calculateDirectDistanceMeters(
+      routePoints[i - 1],
+      routePoints[i],
+    );
+  }
+  const distanceMeters = Math.max(1, Math.round(totalDistanceMeters));
+  // Estimate travel time at 80 km/h average speed
+  const durationSeconds = Math.max(
+    1,
+    Math.round((distanceMeters / 1000 / 80) * 3600),
+  );
+  return {
+    polyline: encodeFlexPolyline(routePoints),
+    distanceMeters,
+    durationSeconds,
+    calculatedAt: new Date().toISOString(),
+  };
 }
 
 function routePreviewNotFound(): HttpException {

@@ -308,6 +308,26 @@ export class TransportOrdersPrismaRepository
     return TransportOrderMapper.toDomain(record);
   }
 
+  async unassignFromDriver(orderId: TransportOrderId): Promise<TransportOrder> {
+    const record = await this.prisma.transportOrder.update({
+      where: { id: orderId.value },
+      data: {
+        assignedDriverUserId: null,
+        status: 'PENDING',
+      },
+      include: {
+        orderDocuments: true,
+        events: {
+          orderBy: { createdAt: 'asc' },
+        },
+        routePoints: routePointsInclude,
+        routePlan: true,
+      },
+    });
+
+    return TransportOrderMapper.toDomain(record);
+  }
+
   async recordRoutePointArrival(
     params: RecordRoutePointArrivalParams,
   ): Promise<void> {
