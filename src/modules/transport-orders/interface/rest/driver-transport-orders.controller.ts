@@ -46,6 +46,7 @@ import { DriverLiveLocationService } from '../../application/services/driver-liv
 import { UpsertDriverLiveLocationDto } from '../../application/dto/driver-live-location.dto';
 import { ConfirmRoutePointArrivalUseCase } from '../../application/use-cases/confirm-route-point-arrival.usecase';
 import { ConfirmRoutePointArrivalDto } from '../../application/dto/confirm-route-point-arrival.dto';
+import { UnassignTransportOrderFromDriverUseCase } from '../../application/use-cases/unassign-transport-order-from-driver.usecase';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -66,6 +67,7 @@ export class DriverTransportOrdersController {
     private readonly detachDocumentUseCase: DetachDocumentFromTransportOrderUseCase,
     private readonly driverLiveLocationService: DriverLiveLocationService,
     private readonly confirmRoutePointArrivalUseCase: ConfirmRoutePointArrivalUseCase,
+    private readonly unassignOrderUseCase: UnassignTransportOrderFromDriverUseCase,
   ) {}
 
   @Get()
@@ -367,6 +369,16 @@ export class DriverTransportOrdersController {
       sequence: result.sequence,
       arrivedAt: result.arrivedAt,
     };
+  }
+
+  @Delete(':id/assignment')
+  @ApiOperation({ summary: 'Unassign current driver from transport order' })
+  async unassign(@Session() session: UserSession, @Param('id') id: string) {
+    await this.unassignOrderUseCase.execute({
+      currentUserId: session.user.id,
+      orderId: id,
+    });
+    return { success: true };
   }
 
   @Get(':id')

@@ -29,6 +29,7 @@ import { ReportTransportOrderProblemUseCase } from './application/use-cases/repo
 import { UploadDriverDocumentToTransportOrderUseCase } from './application/use-cases/upload-driver-document-to-transport-order.usecase';
 import { UploadDispatcherDocumentToTransportOrderUseCase } from './application/use-cases/upload-dispatcher-document-to-transport-order.usecase';
 import { ConfirmRoutePointArrivalUseCase } from './application/use-cases/confirm-route-point-arrival.usecase';
+import { UnassignTransportOrderFromDriverUseCase } from './application/use-cases/unassign-transport-order-from-driver.usecase';
 
 import { DispatcherTransportOrdersController } from './interface/rest/dispatcher-transport-orders.controller';
 import { DriverTransportOrdersController } from './interface/rest/driver-transport-orders.controller';
@@ -71,6 +72,7 @@ import { DriverTransportOrdersController } from './interface/rest/driver-transpo
     UploadDriverDocumentToTransportOrderUseCase,
     UploadDispatcherDocumentToTransportOrderUseCase,
     ConfirmRoutePointArrivalUseCase,
+    UnassignTransportOrderFromDriverUseCase,
   ],
   controllers: [
     DispatcherTransportOrdersController,
