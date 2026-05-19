@@ -81,14 +81,16 @@ export class AssignTransportOrderToDriverUseCase {
         userId: driverId,
       });
 
-      await this.notificationRepository.create({
-        userId: new UserId(assignedOrder.createdByUserId),
-        type: NotificationType.ORDER_STATUS_CHANGED,
-        data: {
-          zTNumber: assignedOrder.ztNumber,
-          status: TransportOrderStatus.ACCEPTED,
-        },
-      });
+      if (assignedOrder.createdByUserId) {
+        await this.notificationRepository.create({
+          userId: new UserId(assignedOrder.createdByUserId),
+          type: NotificationType.ORDER_STATUS_CHANGED,
+          data: {
+            zTNumber: assignedOrder.ztNumber,
+            status: TransportOrderStatus.ACCEPTED,
+          },
+        });
+      }
 
       const reloaded = await this.orderRepository.findById(assignedOrder.id);
       return reloaded ?? currentOrder;

@@ -112,7 +112,11 @@ export class UpdateTransportOrderUseCase {
       routePoints,
     });
 
-    if (input.payload.status && input.payload.status !== previousStatus) {
+    if (
+      input.payload.status &&
+      input.payload.status !== previousStatus &&
+      existing.createdByUserId
+    ) {
       const actingUserId = new UserId(existing.createdByUserId);
       const eventType =
         input.payload.status === TransportOrderStatus.COMPLETED

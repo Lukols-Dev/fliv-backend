@@ -37,7 +37,7 @@ export class TransportOrder {
     public temperatureSensitive: boolean,
     public notes: string | null,
 
-    public createdByUserId: string,
+    public createdByUserId: string | null,
     public assignedDriverUserId: string | null,
     public createdAt: Date,
     public updatedAt: Date,
