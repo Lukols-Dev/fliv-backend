@@ -104,7 +104,7 @@ model UserRole {
   userId String
   roleId String
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [id])
 
   assignedAt DateTime @default(now())
@@ -252,8 +252,8 @@ model TransportOrder {
   temperatureSensitive Boolean @default(false)
   notes             String?
 
-  createdByUserId   String
-  createdByUser     User   @relation("CreatedByUser", fields: [createdByUserId], references: [id])
+  createdByUserId   String?
+  createdByUser     User?  @relation("CreatedByUser", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   assignedDriverUserId String?
   assignedDriver       User?  @relation("AssignedDriver", fields: [assignedDriverUserId], references: [id])
@@ -383,7 +383,7 @@ model Notification {
   createdAt        DateTime         @default(now())
   readAt           DateTime?
 
-  user             User             @relation(fields: [userId], references: [id])
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

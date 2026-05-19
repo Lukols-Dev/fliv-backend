@@ -73,15 +73,17 @@ export class ReportTransportOrderEventUseCase {
       userId,
     });
 
-    await this.notificationRepository.create({
-      userId: new UserId(order.createdByUserId),
-      type: NotificationType.ORDER_EVENT,
-      data: {
-        zTNumber: order.ztNumber,
-        eventType: input.eventType,
-        status: TransportOrderStatus.IN_PROGRESS,
-      },
-    });
+    if (order.createdByUserId) {
+      await this.notificationRepository.create({
+        userId: new UserId(order.createdByUserId),
+        type: NotificationType.ORDER_EVENT,
+        data: {
+          zTNumber: order.ztNumber,
+          eventType: input.eventType,
+          status: TransportOrderStatus.IN_PROGRESS,
+        },
+      });
+    }
 
     const reloaded = await this.orderRepository.findById(orderId);
     return reloaded ?? order;
