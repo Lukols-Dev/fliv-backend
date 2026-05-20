@@ -1,10 +1,47 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { APP_FILTER } from '@nestjs/core';
+import { AuthModule as BetterAuthModule } from '@thallesp/nestjs-better-auth';
+
+import { ConfigModule } from './config/config.module';
+import { LoggingModule } from './infrastructure/logging/logging.module';
+import { PrismaModule } from './infrastructure/prisma/prisma.module';
+
+import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
+import { HealthController } from './shared/health.controller';
+
+import { UsersModule } from './modules/users/users.module';
+import { betterAuthClient } from './infrastructure/auth/better-auth.client';
+import { TransportOrdersModule } from './modules/transport-orders/transport-orders.module';
+import { DocumentsModule } from './modules/documents/documents.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { PartnerPoisModule } from './modules/partner-pois/partner-pois.module';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    //global config module
+    ConfigModule,
+
+    //insfrastructure modules
+    LoggingModule,
+    PrismaModule,
+
+    //domeain / features modules
+    //TODO: RolesModule, NotificationsModule, DriverModule, DispatcherModule
+    BetterAuthModule.forRoot({ auth: betterAuthClient }),
+    AuthModule,
+    UsersModule,
+    TransportOrdersModule,
+    PartnerPoisModule,
+    DocumentsModule,
+    NotificationsModule,
+  ],
+  controllers: [HealthController],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}

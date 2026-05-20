@@ -1,0 +1,414 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  modules  = ["cjs"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Users / Roles ---
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  emailVerified Boolean @default(false) 
+  firstName   String?
+  lastName    String?
+  name        String?
+  phone       String?
+
+  avatarUrl                String?
+  avatarStorageKey         String?
+
+  isActive    Boolean  @default(false)
+  isAgreedToTerms Boolean  @default(false)
+  isAgreedToPrivacyPolicy Boolean  @default(false)
+
+  roles                   UserRole[]
+  driverProfile           DriverProfile?
+  notifications           Notification[]
+  transportOrders         TransportOrder[] @relation("CreatedByUser")
+  assignedTransportOrders TransportOrder[] @relation("AssignedDriver")
+  driverLiveLocations     DriverLiveLocation[]
+  uploadedOrderDocuments  OrderDocument[]  @relation("OrderDocumentUploadedBy")
+
+  accounts Account[]
+  sessions Session[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  providerId            String
+  accountId             String
+  // OAuth tokens (optional)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  scope                 String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  // Local auth (email/password) if enabled
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  impersonatedBy String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// --- Roles ---
+
+model Role {
+  id    String  @id @default(uuid())
+  key  String  @unique // 'DRIVER', 'DISPATCHER', 'ACCOUNTANT', 'SPEDITOR'
+
+  users UserRole[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model UserRole {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id])
+
+  assignedAt DateTime @default(now())
+
+  @@id([userId, roleId])
+  @@index([roleId])
+}
+
+// --- Driver profile
+
+model DriverProfile {
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id])
+
+  companyInternalId       String? 
+  driverCode              String   @unique 
+
+  visaExpiresAt                 DateTime?
+  drivingLicenseExpiresAt       DateTime?
+  workPermitExpiresAt           DateTime?
+  medicalCheckExpiresAt         DateTime?
+  psychCheckExpiresAt           DateTime?
+  driverCardExpiresAt           DateTime?
+  residenceCardExpiresAt        DateTime?
+  driverCertificateExpiresAt    DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([driverCode])
+}
+
+// --- Transport Order ---
+
+enum TransportOrderStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  LOADING
+  UNLOADING
+  PAUSED
+  COMPLETED
+  PROBLEM
+}
+
+enum DocumentSource {
+  DRIVER
+  DISPATCHER
+  SYSTEM
+}
+
+enum TransportOrderEventType {
+  STATUS_CHANGED
+  INCIDENT_DETOUR
+  INCIDENT_ACCIDENT
+  INCIDENT_DELAY
+  ROUTE_PAUSED
+  ROUTE_RESUMED
+  ROUTE_FINISHED
+  PROBLEM_REPORTED
+  ORDER_ASSIGNED
+  ORDER_COMPLETED
+}
+
+enum TransportOrderRoutePointType {
+  LOADING
+  UNLOADING
+  FUEL
+  PARKING
+  SERVICE
+  OTHER
+}
+
+enum TransportOrderRoutePointBehavior {
+  STOP
+  PASS_THROUGH
+}
+
+enum TransportOrderRoutePointSource {
+  DISPATCHER
+  SYSTEM
+  HERE
+}
+
+enum DriverLocationSource {
+  HERE_SDK
+}
+
+enum PartnerPoiType {
+  FUEL
+  PARKING
+  SERVICE
+  OTHER
+}
+
+enum NotificationType {
+  ORDER_STATUS_CHANGED
+  ORDER_EVENT
+}
+
+model PartnerPoi {
+  id        String         @id @default(cuid())
+  name      String?
+  type      PartnerPoiType @default(FUEL)
+
+  address   String
+  latitude  Float
+  longitude Float
+
+  isActive  Boolean        @default(true)
+
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([isActive, latitude, longitude])
+}
+
+model TransportOrder {
+  id          String   @id @default(cuid())
+  ztNumber    String   @unique
+  pwNumber    String?
+  status    TransportOrderStatus @default(PENDING)
+  timelinessStatus String?
+
+  vehiclePlate      String
+  trailerPlate      String?
+  driverFirstName   String
+  driverLastName    String
+  driverPhone       String
+
+  clientName        String
+  contractNumber    String?
+  payerName         String?
+  payerVatId        String?
+  payerEmail        String?
+
+  fromCountry       String
+  fromAddress       String?
+  toCountry         String
+  toAddress         String?
+  cargoWeightKg     Float?
+  loadingDate       DateTime?
+  loadingTime       String?
+  cargoDescription  String?
+  temperatureSensitive Boolean @default(false)
+  notes             String?
+
+  createdByUserId   String?
+  createdByUser     User?  @relation("CreatedByUser", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  assignedDriverUserId String?
+  assignedDriver       User?  @relation("AssignedDriver", fields: [assignedDriverUserId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderDocuments OrderDocument[]
+  events         TransportOrderEvent[]
+  routePoints    TransportOrderRoutePoint[]
+  routePlan      TransportOrderRoutePlan?
+  driverLiveLocations DriverLiveLocation[]
+
+  @@index([ztNumber])
+  @@index([createdByUserId])
+  @@index([assignedDriverUserId])
+}
+
+model TransportOrderRoutePoint {
+  id               String                       @id @default(cuid())
+  transportOrderId String
+  transportOrder   TransportOrder               @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+  sequence         Int
+  type             TransportOrderRoutePointType
+  behavior         TransportOrderRoutePointBehavior @default(STOP)
+  source           TransportOrderRoutePointSource @default(DISPATCHER)
+  isManual         Boolean                      @default(true)
+  label            String?
+  address          String?
+  latitude         Float
+  longitude        Float
+
+  arrivedAt        DateTime?
+  arrivalLatitude  Float?
+  arrivalLongitude Float?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([transportOrderId, sequence])
+  @@index([transportOrderId])
+}
+
+model TransportOrderRoutePlan {
+  id               String         @id @default(cuid())
+  transportOrderId String         @unique
+  transportOrder   TransportOrder @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+
+  routingProfile   Json
+  vehicleSpec      Json?
+
+  distanceMeters   Int
+  durationSeconds  Int
+  polyline         String
+  calculationHash  String
+  calculatedAt     DateTime
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model TransportOrderRoutePreview {
+  id               String   @id @default(cuid())
+  transportOrderId String
+  calculationHash  String
+
+  calculationInput Json
+  calculatedRoute  Json
+
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+
+  @@index([transportOrderId])
+  @@index([expiresAt])
+}
+
+model DriverLiveLocation {
+  id               String               @id @default(cuid())
+
+  driverId         String
+  driver           User                 @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  transportOrderId String
+  transportOrder   TransportOrder       @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+
+  latitude         Float
+  longitude        Float
+
+  accuracyMeters   Float?
+  speedMps         Float?
+  bearingDegrees   Float?
+
+  remainingDistanceMeters  Int?
+  traveledDistanceMeters   Int?
+  remainingDurationSeconds Int?
+
+  recordedAt       DateTime
+  source           DriverLocationSource @default(HERE_SDK)
+
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@unique([transportOrderId, driverId])
+  @@index([transportOrderId])
+  @@index([driverId])
+}
+
+model TransportOrderEvent {
+  id               String                 @id @default(cuid())
+  transportOrderId String
+  transportOrder   TransportOrder         @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+  type             TransportOrderEventType
+  previousStatus   TransportOrderStatus?
+  newStatus        TransportOrderStatus?
+  description      String?
+  createdByUserId  String
+  createdAt        DateTime               @default(now())
+
+  @@index([transportOrderId])
+}
+
+model Notification {
+  id               String           @id @default(cuid())
+  userId           String
+  type             NotificationType
+  data             Json
+  createdAt        DateTime         @default(now())
+  readAt           DateTime?
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model OrderDocument {
+  id String @id @default(cuid())
+
+  transportOrderId String
+  transportOrder   TransportOrder @relation(fields: [transportOrderId], references: [id], onDelete: Cascade)
+
+  url              String
+  storageKey       String  @unique
+  mimeType         String
+  sizeBytes        Int?
+  originalFilename String?
+  description      String?
+
+  uploadedByUserId String?
+  uploadedByUser   User?   @relation("OrderDocumentUploadedBy", fields: [uploadedByUserId], references: [id])
+
+  source DocumentSource @default(DISPATCHER)
+  title  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([transportOrderId])
+  @@index([uploadedByUserId])
+}

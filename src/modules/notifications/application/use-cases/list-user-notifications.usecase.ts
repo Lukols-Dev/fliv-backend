@@ -1,0 +1,31 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { UserId } from 'src/modules/users/domain/value-objects/user-id.vo';
+import {
+  ListNotificationsResult,
+  NOTIFICATION_REPOSITORY,
+  type NotificationRepositoryPort,
+} from '../ports/notification.repository.port';
+
+export interface ListUserNotificationsInput {
+  currentUserId: string;
+  page?: number;
+  limit?: number;
+}
+
+@Injectable()
+export class ListUserNotificationsUseCase {
+  constructor(
+    @Inject(NOTIFICATION_REPOSITORY)
+    private readonly notificationRepository: NotificationRepositoryPort,
+  ) {}
+
+  async execute(
+    input: ListUserNotificationsInput,
+  ): Promise<ListNotificationsResult> {
+    const userId = new UserId(input.currentUserId);
+    return this.notificationRepository.listForUser(userId, {
+      page: input.page,
+      limit: input.limit,
+    });
+  }
+}
