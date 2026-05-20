@@ -7,6 +7,7 @@ import { LoggingModule } from './infrastructure/logging/logging.module';
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
 
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
+import { HealthController } from './shared/health.controller';
 
 import { UsersModule } from './modules/users/users.module';
 import { betterAuthClient } from './infrastructure/auth/better-auth.client';
@@ -35,7 +36,7 @@ import { PartnerPoisModule } from './modules/partner-pois/partner-pois.module';
     DocumentsModule,
     NotificationsModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [
     {
       provide: APP_FILTER,
